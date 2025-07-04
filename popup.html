@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 300px;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
+
+        .section {
+            margin-bottom: 16px;
+        }
+
+        .section label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .language-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .language-row select {
+            flex: 1;
+        }
+
+        .arrow {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 12px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .page-info {
+            margin-top: 12px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .settings-link {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .settings-link a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .settings-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <span class="icon">🌐</span>
+    <h3>Web Translator</h3>
+</div>
+
+<div class="section">
+    <label>Sprachen:</label>
+    <div class="language-row">
+        <select id="sourceLang">
+            <option value="auto">Auto-Erkennung</option>
+            <option value="en">English</option>
+            <option value="de">Deutsch</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="it">Italiano</option>
+            <option value="pt">Português</option>
+            <option value="ru">Русский</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="zh">中文</option>
+        </select>
+        <span class="arrow">→</span>
+        <select id="targetLang">
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="es">Español</option>
+            <option value="it">Italiano</option>
+            <option value="pt">Português</option>
+            <option value="ru">Русский</option>
+            <option value="ja">日本語</option>
+            <option value="ko">한국어</option>
+            <option value="zh">中文</option>
+        </select>
+    </div>
+</div>
+
+<div class="buttons">
+    <button id="translateBtn" class="btn btn-primary">Übersetzen</button>
+    <button id="restoreBtn" class="btn btn-secondary">Zurücksetzen</button>
+</div>
+
+<div id="status" class="status" style="display: none;"></div>
+
+<div id="pageInfo" class="page-info" style="display: none;"></div>
+
+<div class="settings-link">
+    <a href="#" id="openSettings">Einstellungen</a>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

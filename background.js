@@ -1,390 +1,364 @@
-// Background Script (Service Worker) für die Translation Extension
+// Background Script (Service Worker) - Smart Web Translator v2.0
 class TranslatorBackground {
-    constructor() {
-        this.init();
+  constructor() {
+    this.translationHistory = [];
+    this.init();
+  }
+
+  init() {
+    // Event Listener müssen synchron registriert werden (MV3 Requirement)
+    chrome.runtime.onInstalled.addListener((details) => this.handleInstall(details));
+    chrome.runtime.onStartup.addListener(() => this.handleStartup());
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      this.handleMessage(request, sender, sendResponse);
+      return true;
+    });
+
+    // Commands (Tastenkürzel)
+    chrome.commands.onCommand.addListener((command) => this.handleCommand(command));
+
+    // Kontextmenü einrichten
+    this.setupContextMenu();
+
+    // Side Panel Verhalten
+    chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+  }
+
+  async handleInstall(details) {
+    if (details.reason === 'install') {
+      await this.setDefaultSettings();
+      // Kontextmenü neu erstellen
+      await this.setupContextMenu();
+    } else if (details.reason === 'update') {
+      await this.migrateSettings(details.previousVersion);
+      await this.setupContextMenu();
     }
+  }
 
-    init() {
-        // Installationshandler
-        chrome.runtime.onInstalled.addListener((details) => {
-            this.handleInstall(details);
-        });
+  async handleStartup() {
+    await this.setupContextMenu();
+  }
 
-        // Startup-Handler
-        chrome.runtime.onStartup.addListener(() => {
-            this.handleStartup();
-        });
+  async setupContextMenu() {
+    try {
+      await chrome.contextMenus.removeAll();
 
-        // Nachrichten von Content Scripts und Popup
-        chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-            this.handleMessage(request, sender, sendResponse);
-            return true; // Für asynchrone Antworten
-        });
+      // Auswahl übersetzen - Hauptfunktion
+      chrome.contextMenus.create({
+        id: 'translate-selection',
+        title: '🌐 "%s" übersetzen',
+        contexts: ['selection']
+      });
 
-        // Kontext-Menü
-        this.setupContextMenu();
+      // Seite übersetzen
+      chrome.contextMenus.create({
+        id: 'translate-page',
+        title: '🌐 Seite übersetzen',
+        contexts: ['page']
+      });
 
-        // Tastenkürzel
-        chrome.commands.onCommand.addListener((command) => {
-            this.handleCommand(command);
-        });
+      // Bilingualer Modus
+      chrome.contextMenus.create({
+        id: 'translate-page-bilingual',
+        title: '📖 Bilingual übersetzen (Original + Übersetzung)',
+        contexts: ['page']
+      });
 
-        // Tab-Updates (für ausgeschlossene Domains)
-        chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-            this.handleTabUpdate(tabId, changeInfo, tab);
-        });
+      // Separator
+      chrome.contextMenus.create({
+        id: 'separator1',
+        type: 'separator',
+        contexts: ['page', 'selection']
+      });
+
+      // Side Panel öffnen
+      chrome.contextMenus.create({
+        id: 'open-sidepanel',
+        title: '📋 Side Panel öffnen',
+        contexts: ['page', 'selection']
+      });
+
+      // Einstellungen
+      chrome.contextMenus.create({
+        id: 'open-options',
+        title: '⚙️ Einstellungen',
+        contexts: ['page']
+      });
+
+      // Click Handler
+      chrome.contextMenus.onClicked.addListener((info, tab) => {
+        this.handleContextMenuClick(info, tab);
+      });
+
+    } catch (error) {
+      console.error('Kontextmenü-Fehler:', error);
     }
+  }
 
-    async handleInstall(details) {
-        if (details.reason === 'install') {
-            // Erste Installation
-            console.log('Extension installiert');
+  async handleContextMenuClick(info, tab) {
+    try {
+      switch (info.menuItemId) {
+        case 'translate-selection':
+          await this.translateAndShowResult(info.selectionText, tab);
+          break;
 
-            // Setze Standardeinstellungen
-            await this.setDefaultSettings();
+        case 'translate-page':
+          await this.sendToContentScript(tab.id, { action: 'translatePage', mode: 'replace' });
+          break;
 
-            // Öffne Optionsseite
-            chrome.runtime.openOptionsPage();
+        case 'translate-page-bilingual':
+          await this.sendToContentScript(tab.id, { action: 'translatePage', mode: 'bilingual' });
+          break;
 
-        } else if (details.reason === 'update') {
-            // Update
-            console.log('Extension aktualisiert von', details.previousVersion);
+        case 'open-sidepanel':
+          await chrome.sidePanel.open({ tabId: tab.id });
+          if (info.selectionText) {
+            // Kurze Verzögerung damit Side Panel laden kann
+            setTimeout(() => {
+              chrome.runtime.sendMessage({
+                action: 'sidepanel-translate',
+                text: info.selectionText
+              });
+            }, 300);
+          }
+          break;
 
-            // Migriere Einstellungen falls nötig
-            await this.migrateSettings(details.previousVersion);
-        }
+        case 'open-options':
+          chrome.runtime.openOptionsPage();
+          break;
+      }
+    } catch (error) {
+      console.error('Kontextmenü-Klick-Fehler:', error);
     }
+  }
 
-    async handleStartup() {
-        console.log('Extension gestartet');
+  async handleCommand(command) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) return;
 
-        // Prüfe Einstellungen
-        await this.validateSettings();
+      switch (command) {
+        case 'translate-selection':
+          // Hole markierten Text vom Content Script
+          const response = await this.sendToContentScript(tab.id, { action: 'getSelection' });
+          if (response?.text) {
+            await this.translateAndShowResult(response.text, tab);
+          }
+          break;
+
+        case 'translate-page':
+          await this.sendToContentScript(tab.id, { action: 'translatePage', mode: 'replace' });
+          break;
+
+        case 'toggle-sidepanel':
+          await chrome.sidePanel.open({ tabId: tab.id });
+          break;
+      }
+    } catch (error) {
+      console.error('Command-Fehler:', error);
     }
+  }
 
-    async handleMessage(request, sender, sendResponse) {
-        try {
-            switch (request.action) {
-                case 'getSettings':
-                    const settings = await chrome.storage.sync.get();
-                    sendResponse({ success: true, settings });
-                    break;
+  async handleMessage(request, sender, sendResponse) {
+    try {
+      switch (request.action) {
+        case 'translate':
+          const result = await this.translateText(request.text, request.source, request.target);
+          sendResponse(result);
+          break;
 
-                case 'translateText':
-                    const result = await this.translateText(request.text, request.source, request.target);
-                    sendResponse(result);
-                    break;
+        case 'getSettings':
+          const settings = await chrome.storage.sync.get();
+          sendResponse({ success: true, settings });
+          break;
 
-                case 'checkDomain':
-                    const isExcluded = await this.isDomainExcluded(request.domain);
-                    sendResponse({ excluded: isExcluded });
-                    break;
+        case 'getHistory':
+          const history = await this.getHistory();
+          sendResponse({ success: true, history });
+          break;
 
-                case 'openOptions':
-                    chrome.runtime.openOptionsPage();
-                    sendResponse({ success: true });
-                    break;
+        case 'clearHistory':
+          await this.clearHistory();
+          sendResponse({ success: true });
+          break;
 
-                default:
-                    sendResponse({ success: false, error: 'Unbekannte Aktion' });
-            }
-        } catch (error) {
-            console.error('Fehler im Background Script:', error);
-            sendResponse({ success: false, error: error.message });
-        }
+        case 'addToHistory':
+          await this.addToHistory(request.entry);
+          sendResponse({ success: true });
+          break;
+
+        case 'openSidePanel':
+          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+          if (tab) {
+            await chrome.sidePanel.open({ tabId: tab.id });
+          }
+          sendResponse({ success: true });
+          break;
+
+        default:
+          sendResponse({ success: false, error: 'Unbekannte Aktion' });
+      }
+    } catch (error) {
+      console.error('Message-Handler-Fehler:', error);
+      sendResponse({ success: false, error: error.message });
     }
+  }
 
-    async setupContextMenu() {
-        // Entferne existierende Menüs
-        await chrome.contextMenus.removeAll();
+  async translateAndShowResult(text, tab) {
+    if (!text || text.trim().length === 0) return;
 
-        // Hauptmenü
-        chrome.contextMenus.create({
-            id: 'translatePage',
-            title: 'Seite übersetzen',
-            contexts: ['page']
-        });
+    const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+    const result = await this.translateText(
+      text.trim(),
+      settings.sourceLang || 'auto',
+      settings.targetLang || 'de'
+    );
 
-        // Textauswahl-Menü
-        chrome.contextMenus.create({
-            id: 'translateSelection',
-            title: 'Auswahl übersetzen',
-            contexts: ['selection']
-        });
+    if (result.success) {
+      // Zum Verlauf hinzufügen
+      await this.addToHistory({
+        original: text.trim(),
+        translated: result.translatedText,
+        source: settings.sourceLang || 'auto',
+        target: settings.targetLang || 'de',
+        timestamp: Date.now()
+      });
 
-        // Separator
-        chrome.contextMenus.create({
-            id: 'separator1',
-            type: 'separator',
-            contexts: ['page', 'selection']
-        });
-
-        // Optionen
-        chrome.contextMenus.create({
-            id: 'openOptions',
-            title: 'Einstellungen',
-            contexts: ['page']
-        });
-
-        // Menü-Klick-Handler
-        chrome.contextMenus.onClicked.addListener((info, tab) => {
-            this.handleContextMenuClick(info, tab);
-        });
+      // Zeige Tooltip im Content Script
+      await this.sendToContentScript(tab.id, {
+        action: 'showTranslation',
+        original: text.trim(),
+        translated: result.translatedText,
+        alternatives: result.alternatives
+      });
+    } else {
+      await this.sendToContentScript(tab.id, {
+        action: 'showError',
+        message: result.error || 'Übersetzungsfehler'
+      });
     }
+  }
 
-    async handleContextMenuClick(info, tab) {
-        try {
-            switch (info.menuItemId) {
-                case 'translatePage':
-                    await this.translateCurrentPage(tab);
-                    break;
+  async translateText(text, source = 'auto', target = 'de') {
+    try {
+      const settings = await chrome.storage.sync.get(['serviceUrl', 'apiKey']);
+      const serviceUrl = settings.serviceUrl || 'http://localhost:5000/translate';
 
-                case 'translateSelection':
-                    await this.translateSelection(info.selectionText, tab);
-                    break;
+      const response = await fetch(serviceUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          q: text,
+          source: source,
+          target: target,
+          format: 'text',
+          alternatives: 3,
+          api_key: settings.apiKey || ''
+        })
+      });
 
-                case 'openOptions':
-                    chrome.runtime.openOptionsPage();
-                    break;
-            }
-        } catch (error) {
-            console.error('Kontextmenü-Fehler:', error);
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        translatedText: result.translatedText || text,
+        alternatives: result.alternatives || [],
+        detectedLanguage: result.detectedLanguage
+      };
+
+    } catch (error) {
+      console.error('Übersetzungsfehler:', error);
+      return { success: false, error: error.message };
     }
+  }
 
-    async handleCommand(command) {
-        try {
-            switch (command) {
-                case 'translate-page':
-                    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-                    await this.translateCurrentPage(tab);
-                    break;
-
-                case 'toggle-translation':
-                    await this.toggleTranslation();
-                    break;
-            }
-        } catch (error) {
-            console.error('Tastenkürzel-Fehler:', error);
-        }
+  async sendToContentScript(tabId, message) {
+    try {
+      return await chrome.tabs.sendMessage(tabId, message);
+    } catch (error) {
+      console.error('Content Script nicht erreichbar:', error);
+      return null;
     }
+  }
 
-    async handleTabUpdate(tabId, changeInfo, tab) {
-        if (changeInfo.status === 'complete' && tab.url) {
-            try {
-                const domain = new URL(tab.url).hostname;
-                const isExcluded = await this.isDomainExcluded(domain);
+  // History Management
+  async getHistory() {
+    const data = await chrome.storage.local.get(['translationHistory']);
+    return data.translationHistory || [];
+  }
 
-                if (isExcluded) {
-                    // Deaktiviere Extension auf dieser Domain
-                    await chrome.action.disable(tabId);
-                } else {
-                    // Aktiviere Extension
-                    await chrome.action.enable(tabId);
-                }
-            } catch (error) {
-                console.error('Tab-Update-Fehler:', error);
-            }
-        }
-    }
+  async addToHistory(entry) {
+    const history = await this.getHistory();
+    history.unshift(entry);
+    // Maximal 100 Einträge behalten
+    const trimmed = history.slice(0, 100);
+    await chrome.storage.local.set({ translationHistory: trimmed });
+  }
 
-    async translateCurrentPage(tab) {
-        try {
-            const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+  async clearHistory() {
+    await chrome.storage.local.set({ translationHistory: [] });
+  }
 
-            const response = await chrome.tabs.sendMessage(tab.id, {
-                action: 'translatePage',
-                sourceLang: settings.sourceLang || 'auto',
-                targetLang: settings.targetLang || 'de'
-            });
+  async setDefaultSettings() {
+    const defaultSettings = {
+      serviceUrl: 'http://localhost:5000/translate',
+      apiKey: '',
+      sourceLang: 'auto',
+      targetLang: 'de',
+      // UI-Einstellungen
+      showSelectionIcon: true,
+      selectionIconDelay: 200,
+      tooltipPosition: 'below',
+      tooltipAutoHide: true,
+      tooltipAutoHideDelay: 5000,
+      // Trigger-Einstellungen
+      enableDoubleClick: false,
+      enableHoverTranslate: false,
+      hoverDelay: 500,
+      // Anzeige-Einstellungen
+      showOriginalInTooltip: true,
+      showAlternatives: true,
+      // Seitenübersetzung
+      bilingualMode: false,
+      bilingualPosition: 'below',
+      highlightTranslated: true,
+      // Sonstiges
+      excludedDomains: '',
+      enableTTS: false,
+      ttsLanguage: 'de-DE'
+    };
 
-            if (response && response.success) {
-                this.showNotification('Seite erfolgreich übersetzt', 'success');
-            } else {
-                this.showNotification('Fehler beim Übersetzen der Seite', 'error');
-            }
-        } catch (error) {
-            console.error('Fehler beim Übersetzen der Seite:', error);
-            this.showNotification('Fehler beim Übersetzen der Seite', 'error');
-        }
-    }
+    await chrome.storage.sync.set(defaultSettings);
+  }
 
-    async translateSelection(text, tab) {
-        try {
-            const settings = await chrome.storage.sync.get(['serviceUrl', 'apiKey', 'sourceLang', 'targetLang']);
+  async migrateSettings(previousVersion) {
+    // Füge neue Einstellungen hinzu falls sie fehlen
+    const current = await chrome.storage.sync.get();
+    const defaults = {
+      showSelectionIcon: true,
+      selectionIconDelay: 200,
+      tooltipPosition: 'below',
+      tooltipAutoHide: true,
+      tooltipAutoHideDelay: 5000,
+      enableDoubleClick: false,
+      enableHoverTranslate: false,
+      hoverDelay: 500,
+      showOriginalInTooltip: true,
+      showAlternatives: true,
+      bilingualMode: false,
+      bilingualPosition: 'below',
+      highlightTranslated: true,
+      enableTTS: false,
+      ttsLanguage: 'de-DE'
+    };
 
-            const result = await this.translateText(
-                text,
-                settings.sourceLang || 'auto',
-                settings.targetLang || 'de'
-            );
-
-            if (result.success) {
-                // Zeige Übersetzung in einer Benachrichtigung
-                this.showNotification(`"${text}" → "${result.translatedText}"`, 'success');
-            } else {
-                this.showNotification('Fehler beim Übersetzen der Auswahl', 'error');
-            }
-        } catch (error) {
-            console.error('Fehler beim Übersetzen der Auswahl:', error);
-            this.showNotification('Fehler beim Übersetzen der Auswahl', 'error');
-        }
-    }
-
-    async toggleTranslation() {
-        try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-            const response = await chrome.tabs.sendMessage(tab.id, {
-                action: 'getPageInfo'
-            });
-
-            if (response && response.isTranslated) {
-                await chrome.tabs.sendMessage(tab.id, { action: 'restorePage' });
-            } else {
-                await this.translateCurrentPage(tab);
-            }
-        } catch (error) {
-            console.error('Fehler beim Umschalten der Übersetzung:', error);
-        }
-    }
-
-    async translateText(text, source, target) {
-        try {
-            const settings = await chrome.storage.sync.get(['serviceUrl', 'apiKey']);
-            const serviceUrl = settings.serviceUrl || 'https://translate.mac/translate';
-            const apiKey = settings.apiKey || '';
-
-            const response = await fetch(serviceUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    q: text,
-                    source: source,
-                    target: target,
-                    format: 'text',
-                    alternatives: 1,
-                    api_key: apiKey
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-
-            return {
-                success: true,
-                translatedText: result.translatedText || text,
-                alternatives: result.alternatives || []
-            };
-
-        } catch (error) {
-            console.error('Übersetzungsfehler:', error);
-            return {
-                success: false,
-                error: error.message
-            };
-        }
-    }
-
-    async isDomainExcluded(domain) {
-        try {
-            const settings = await chrome.storage.sync.get(['excludedDomains']);
-            const excludedDomains = settings.excludedDomains || '';
-
-            if (!excludedDomains.trim()) {
-                return false;
-            }
-
-            const domains = excludedDomains.split('\n')
-                .map(d => d.trim().toLowerCase())
-                .filter(d => d.length > 0);
-
-            const currentDomain = domain.toLowerCase();
-
-            return domains.some(excludedDomain => {
-                // Exakte Übereinstimmung oder Subdomain
-                return currentDomain === excludedDomain ||
-                    currentDomain.endsWith('.' + excludedDomain);
-            });
-
-        } catch (error) {
-            console.error('Fehler beim Prüfen der Domain:', error);
-            return false;
-        }
-    }
-
-    async setDefaultSettings() {
-        const defaultSettings = {
-            serviceUrl: 'https://translate.mac/translate',
-            apiKey: '',
-            sourceLang: 'auto',
-            targetLang: 'de',
-            defaultSourceLang: 'auto',
-            defaultTargetLang: 'de',
-            batchSize: 5,
-            excludedDomains: '',
-            hotkey: 'Ctrl+Shift+T'
-        };
-
-        try {
-            await chrome.storage.sync.set(defaultSettings);
-            console.log('Standardeinstellungen gesetzt');
-        } catch (error) {
-            console.error('Fehler beim Setzen der Standardeinstellungen:', error);
-        }
-    }
-
-    async migrateSettings(previousVersion) {
-        try {
-            console.log('Migriere Einstellungen von Version', previousVersion);
-
-            // Hier können spätere Versionen Migrations-Logik hinzufügen
-            // Beispiel:
-            // if (previousVersion < '2.0') {
-            //   // Migriere alte Einstellungen
-            // }
-
-        } catch (error) {
-            console.error('Fehler bei der Einstellungsmigration:', error);
-        }
-    }
-
-    async validateSettings() {
-        try {
-            const settings = await chrome.storage.sync.get(['serviceUrl']);
-
-            if (!settings.serviceUrl) {
-                console.warn('Keine Service URL konfiguriert');
-                // Öffne Optionsseite
-                chrome.runtime.openOptionsPage();
-            }
-        } catch (error) {
-            console.error('Fehler bei der Einstellungsvalidierung:', error);
-        }
-    }
-
-    showNotification(message, type = 'info') {
-        // Chrome Notifications API verwenden
-        if (chrome.notifications) {
-            const iconUrl = type === 'success' ? 'icons/icon48.png' :
-                type === 'error' ? 'icons/icon48.png' : 'icons/icon48.png';
-
-            chrome.notifications.create({
-                type: 'basic',
-                iconUrl: iconUrl,
-                title: 'Web Translator',
-                message: message
-            });
-        } else {
-            console.log('Benachrichtigung:', message);
-        }
-    }
+    const merged = { ...defaults, ...current };
+    await chrome.storage.sync.set(merged);
+  }
 }
 
-// Initialisiere Background Script
+// Initialisieren
 new TranslatorBackground();

@@ -1,201 +1,116 @@
-// Popup Script für die Translation Extension
-class TranslatorPopup {
-    constructor() {
-        this.init();
+// Popup JavaScript - Smart Web Translator v2.0
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Einstellungen laden
+  const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+  document.getElementById('sourceLang').value = settings.sourceLang || 'auto';
+  document.getElementById('targetLang').value = settings.targetLang || 'de';
+
+  // Quick Translate
+  const translateBtn = document.getElementById('translateBtn');
+  const inputText = document.getElementById('inputText');
+  const result = document.getElementById('result');
+
+  translateBtn.addEventListener('click', async () => {
+    const text = inputText.value.trim();
+    if (!text) return;
+
+    const sourceLang = document.getElementById('sourceLang').value;
+    const targetLang = document.getElementById('targetLang').value;
+
+    translateBtn.disabled = true;
+    translateBtn.innerHTML = '<div class="spinner"></div> Übersetze...';
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'translate',
+        text,
+        source: sourceLang,
+        target: targetLang
+      });
+
+      result.classList.add('show');
+      result.classList.remove('error');
+
+      if (response.success) {
+        result.textContent = response.translatedText;
+
+        // Zum Verlauf hinzufügen
+        await chrome.runtime.sendMessage({
+          action: 'addToHistory',
+          entry: {
+            original: text,
+            translated: response.translatedText,
+            source: sourceLang,
+            target: targetLang,
+            timestamp: Date.now()
+          }
+        });
+      } else {
+        result.textContent = 'Fehler: ' + (response.error || 'Unbekannt');
+        result.classList.add('error');
+      }
+    } catch (error) {
+      result.classList.add('show', 'error');
+      result.textContent = 'Verbindungsfehler';
     }
 
-    async init() {
-        // Lade gespeicherte Einstellungen
-        await this.loadSettings();
+    translateBtn.disabled = false;
+    translateBtn.innerHTML = `
+      <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+      Übersetzen
+    `;
+  });
 
-        // Event Listeners
-        this.setupEventListeners();
-
-        // Lade Seiteninformationen
-        await this.loadPageInfo();
+  // Enter zum Übersetzen
+  inputText.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      translateBtn.click();
     }
+  });
 
-    async loadSettings() {
-        try {
-            const settings = await chrome.storage.sync.get(['targetLang', 'sourceLang']);
+  // Sprachen speichern
+  document.getElementById('sourceLang').addEventListener('change', saveLanguages);
+  document.getElementById('targetLang').addEventListener('change', saveLanguages);
 
-            const sourceLang = document.getElementById('sourceLang');
-            const targetLang = document.getElementById('targetLang');
+  async function saveLanguages() {
+    const sourceLang = document.getElementById('sourceLang').value;
+    const targetLang = document.getElementById('targetLang').value;
+    await chrome.storage.sync.set({ sourceLang, targetLang });
+  }
 
-            if (settings.sourceLang) {
-                sourceLang.value = settings.sourceLang;
-            }
+  // Seite übersetzen
+  document.getElementById('translatePage').addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id, { action: 'translatePage', mode: 'replace' });
+    window.close();
+  });
 
-            if (settings.targetLang) {
-                targetLang.value = settings.targetLang;
-            }
-        } catch (error) {
-            console.error('Fehler beim Laden der Einstellungen:', error);
-        }
-    }
+  // Bilingual
+  document.getElementById('bilingualPage').addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id, { action: 'translatePage', mode: 'bilingual' });
+    window.close();
+  });
 
-    setupEventListeners() {
-        const translateBtn = document.getElementById('translateBtn');
-        const restoreBtn = document.getElementById('restoreBtn');
-        const openSettings = document.getElementById('openSettings');
-        const sourceLang = document.getElementById('sourceLang');
-        const targetLang = document.getElementById('targetLang');
+  // Side Panel öffnen
+  document.getElementById('openSidepanel').addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.sidePanel.open({ tabId: tab.id });
+    window.close();
+  });
 
-        translateBtn.addEventListener('click', () => this.translatePage());
-        restoreBtn.addEventListener('click', () => this.restorePage());
-        openSettings.addEventListener('click', () => this.openOptionsPage());
+  // Wiederherstellen
+  document.getElementById('restorePage').addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id, { action: 'restorePage' });
+    window.close();
+  });
 
-        // Speichere Sprachauswahl
-        sourceLang.addEventListener('change', () => this.saveLanguageSettings());
-        targetLang.addEventListener('change', () => this.saveLanguageSettings());
-    }
-
-    async saveLanguageSettings() {
-        const sourceLang = document.getElementById('sourceLang').value;
-        const targetLang = document.getElementById('targetLang').value;
-
-        try {
-            await chrome.storage.sync.set({
-                sourceLang: sourceLang,
-                targetLang: targetLang
-            });
-        } catch (error) {
-            console.error('Fehler beim Speichern der Sprachen:', error);
-        }
-    }
-
-    async loadPageInfo() {
-        try {
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-            const response = await chrome.tabs.sendMessage(tab.id, {
-                action: 'getPageInfo'
-            });
-
-            if (response) {
-                this.updatePageInfo(response);
-                this.updateButtonStates(response.isTranslated);
-            }
-        } catch (error) {
-            console.error('Fehler beim Laden der Seiteninformationen:', error);
-            this.showStatus('Fehler beim Laden der Seiteninformationen', 'error');
-        }
-    }
-
-    updatePageInfo(info) {
-        const pageInfo = document.getElementById('pageInfo');
-
-        if (info.textNodes > 0) {
-            pageInfo.innerHTML = `
-        <strong>Seiteninformationen:</strong><br>
-        📄 ${info.textNodes} übersetzbare Textblöcke<br>
-        ${info.isTranslated ? '✅ Übersetzt (' + info.sourceLang + ' → ' + info.targetLang + ')' : '⏳ Nicht übersetzt'}
-      `;
-            pageInfo.style.display = 'block';
-        } else {
-            pageInfo.innerHTML = '<strong>⚠️ Keine übersetzbare Texte gefunden</strong>';
-            pageInfo.style.display = 'block';
-        }
-    }
-
-    updateButtonStates(isTranslated) {
-        const translateBtn = document.getElementById('translateBtn');
-        const restoreBtn = document.getElementById('restoreBtn');
-
-        translateBtn.textContent = isTranslated ? 'Neu übersetzen' : 'Übersetzen';
-        restoreBtn.disabled = !isTranslated;
-    }
-
-    async translatePage() {
-        const sourceLang = document.getElementById('sourceLang').value;
-        const targetLang = document.getElementById('targetLang').value;
-
-        if (sourceLang === targetLang && sourceLang !== 'auto') {
-            this.showStatus('Quell- und Zielsprache sind identisch', 'error');
-            return;
-        }
-
-        try {
-            this.setButtonsEnabled(false);
-            this.showStatus('Übersetze Seite...', 'info');
-
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-            const response = await chrome.tabs.sendMessage(tab.id, {
-                action: 'translatePage',
-                sourceLang: sourceLang,
-                targetLang: targetLang
-            });
-
-            if (response && response.success) {
-                this.showStatus(`Erfolgreich ${response.translated} Textblöcke übersetzt!`, 'success');
-                this.updateButtonStates(true);
-
-                // Aktualisiere Seiteninformationen
-                setTimeout(() => this.loadPageInfo(), 1000);
-            } else {
-                this.showStatus(response?.error || 'Unbekannter Fehler', 'error');
-            }
-        } catch (error) {
-            console.error('Übersetzungsfehler:', error);
-            this.showStatus('Fehler beim Übersetzen: ' + error.message, 'error');
-        } finally {
-            this.setButtonsEnabled(true);
-        }
-    }
-
-    async restorePage() {
-        try {
-            this.setButtonsEnabled(false);
-            this.showStatus('Stelle Originaltexte wieder her...', 'info');
-
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-            const response = await chrome.tabs.sendMessage(tab.id, {
-                action: 'restorePage'
-            });
-
-            if (response && response.success) {
-                this.showStatus('Originaltexte wiederhergestellt', 'success');
-                this.updateButtonStates(false);
-
-                // Aktualisiere Seiteninformationen
-                setTimeout(() => this.loadPageInfo(), 500);
-            } else {
-                this.showStatus('Fehler beim Wiederherstellen', 'error');
-            }
-        } catch (error) {
-            console.error('Wiederherstellungsfehler:', error);
-            this.showStatus('Fehler beim Wiederherstellen: ' + error.message, 'error');
-        } finally {
-            this.setButtonsEnabled(true);
-        }
-    }
-
-    setButtonsEnabled(enabled) {
-        document.getElementById('translateBtn').disabled = !enabled;
-        document.getElementById('restoreBtn').disabled = !enabled;
-    }
-
-    showStatus(message, type = 'info') {
-        const status = document.getElementById('status');
-        status.textContent = message;
-        status.className = `status ${type}`;
-        status.style.display = 'block';
-
-        if (type === 'success') {
-            setTimeout(() => {
-                status.style.display = 'none';
-            }, 3000);
-        }
-    }
-
-    openOptionsPage() {
-        chrome.runtime.openOptionsPage();
-    }
-}
-
-// Initialisiere Popup
-document.addEventListener('DOMContentLoaded', () => {
-    new TranslatorPopup();
+  // Einstellungen öffnen
+  document.getElementById('openOptions').addEventListener('click', (e) => {
+    e.preventDefault();
+    chrome.runtime.openOptionsPage();
+  });
 });

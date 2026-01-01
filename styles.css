@@ -1,162 +1,394 @@
-/* Styles für Content Script UI-Elemente */
+/* Smart Web Translator v2.0 - Elegante, nicht-störende Styles */
 
-/* Floating Button */
-#translate-floating-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    background: #007bff;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 20px;
-    z-index: 10000;
-    box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
-    transition: all 0.3s ease;
-    border: none;
-    outline: none;
+/* === Basis === */
+.smt-ui {
+  all: initial;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif !important;
+  box-sizing: border-box !important;
+  line-height: 1.5 !important;
 }
 
-#translate-floating-btn:hover {
-    background: #0056b3;
-    transform: scale(1.1);
-    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.4);
+.smt-ui * {
+  box-sizing: border-box !important;
 }
 
-#translate-floating-btn:active {
-    transform: scale(0.95);
+/* === Selection Icon (kleines Übersetzen-Icon) === */
+.smt-selection-icon {
+  width: 28px;
+  height: 28px;
+  background: #4F46E5;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2147483646;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3), 0 1px 2px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.15s ease-out;
 }
 
-/* Progress Bar */
-#translate-progress {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    width: 280px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    padding: 16px;
-    z-index: 10000;
-    display: none;
-    border: 1px solid #e0e0e0;
+.smt-selection-icon.smt-visible {
+  opacity: 1;
+  transform: scale(1);
 }
 
-#translate-progress .progress-fill {
-    height: 8px;
-    background: #007bff;
-    border-radius: 4px;
-    width: 0%;
-    transition: width 0.3s ease;
-    margin-bottom: 8px;
+.smt-selection-icon:hover {
+  background: #4338CA;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
 }
 
-#translate-progress .progress-text {
-    font-size: 14px;
-    color: #333;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-weight: 500;
+.smt-selection-icon:active {
+  transform: scale(0.95);
 }
 
-/* Notification */
-.translate-notification {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-20px);
-    background: white;
-    color: #333;
-    padding: 12px 20px;
-    border-radius: 6px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    z-index: 10001;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    opacity: 0;
-    transition: all 0.3s ease;
-    max-width: 400px;
-    text-align: center;
-    border: 1px solid #e0e0e0;
+.smt-selection-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
 }
 
-.translate-notification.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+/* === Tooltip (Übersetzungsergebnis) === */
+.smt-tooltip {
+  position: absolute;
+  z-index: 2147483647;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  max-width: 400px;
+  min-width: 200px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+  transition: all 0.2s ease-out;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
-.translate-notification.translate-success {
-    background: #d4edda;
-    color: #155724;
-    border-color: #c3e6cb;
+.smt-tooltip.smt-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-.translate-notification.translate-error {
-    background: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
+.smt-tooltip.smt-above {
+  transform: translateX(-50%) translateY(-100%) translateY(-18px);
 }
 
-.translate-notification.translate-info {
-    background: #d1ecf1;
-    color: #0c5460;
-    border-color: #bee5eb;
+.smt-tooltip.smt-above.smt-visible {
+  transform: translateX(-50%) translateY(-100%) translateY(-10px);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    #translate-floating-btn {
-        top: 10px;
-        right: 10px;
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
-    }
-
-    #translate-progress {
-        top: 60px;
-        right: 10px;
-        left: 10px;
-        width: auto;
-        max-width: none;
-    }
-
-    .translate-notification {
-        left: 10px;
-        right: 10px;
-        max-width: none;
-        transform: translateY(-20px);
-    }
-
-    .translate-notification.show {
-        transform: translateY(0);
-    }
+.smt-tooltip-content {
+  padding: 14px 16px;
 }
 
-/* Verhindere Konflikte mit existierenden Seiten-Styles */
-#translate-floating-btn,
-#translate-progress,
-.translate-notification {
-    box-sizing: border-box !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+.smt-original {
+  font-size: 12px;
+  color: #6B7280;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+  word-break: break-word;
 }
 
-#translate-floating-btn *,
-#translate-progress *,
-.translate-notification * {
-    box-sizing: border-box !important;
+.smt-translated {
+  font-size: 15px;
+  color: #111827;
+  font-weight: 500;
+  word-break: break-word;
 }
 
-/* Verstecke UI-Elemente beim Drucken */
+.smt-alternatives {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #E5E7EB;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.smt-alt {
+  font-size: 12px;
+  color: #6B7280;
+  background: #F3F4F6;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.smt-alt:hover {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+/* Tooltip Actions */
+.smt-tooltip-actions {
+  display: flex;
+  gap: 2px;
+  padding: 8px 12px;
+  background: #F9FAFB;
+  border-top: 1px solid #E5E7EB;
+}
+
+.smt-action {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  color: #6B7280;
+}
+
+.smt-action:hover {
+  background: #E5E7EB;
+  color: #374151;
+}
+
+.smt-action:active {
+  transform: scale(0.92);
+}
+
+.smt-action svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.smt-action.smt-close {
+  margin-left: auto;
+}
+
+/* === Progress Overlay === */
+.smt-progress {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  padding: 16px 20px;
+  min-width: 280px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s ease-out;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.smt-progress.smt-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.smt-progress-bar {
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.smt-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4F46E5, #7C3AED);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.3s ease-out;
+}
+
+.smt-progress-text {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* === Notifications === */
+.smt-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 2147483647;
+  background: #ffffff;
+  color: #374151;
+  padding: 12px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s ease-out;
+  max-width: 90vw;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.smt-notification.smt-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.smt-notification-success {
+  background: #ECFDF5;
+  color: #065F46;
+  border-color: #A7F3D0;
+}
+
+.smt-notification-error {
+  background: #FEF2F2;
+  color: #991B1B;
+  border-color: #FECACA;
+}
+
+.smt-notification-info {
+  background: #EFF6FF;
+  color: #1E40AF;
+  border-color: #BFDBFE;
+}
+
+/* === Bilingual Mode === */
+.smt-bilingual-wrapper {
+  display: block;
+}
+
+.smt-bilingual-original {
+  display: block;
+  color: inherit;
+}
+
+.smt-bilingual-translated {
+  display: block;
+  color: #4F46E5;
+  font-style: italic;
+  margin-top: 4px;
+  padding-left: 12px;
+  border-left: 3px solid #C7D2FE;
+  opacity: 0.9;
+}
+
+/* Highlight für übersetzte Elemente */
+.smt-translated-highlight {
+  background: linear-gradient(120deg, #E0E7FF 0%, #EDE9FE 100%);
+  border-radius: 2px;
+  padding: 0 2px;
+  margin: 0 -2px;
+}
+
+/* === Dark Mode Support === */
+@media (prefers-color-scheme: dark) {
+  .smt-tooltip {
+    background: #1F2937;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .smt-original {
+    color: #9CA3AF;
+    border-bottom-color: #374151;
+  }
+
+  .smt-translated {
+    color: #F9FAFB;
+  }
+
+  .smt-alternatives {
+    border-top-color: #374151;
+  }
+
+  .smt-alt {
+    background: #374151;
+    color: #D1D5DB;
+  }
+
+  .smt-alt:hover {
+    background: #4B5563;
+    color: #F3F4F6;
+  }
+
+  .smt-tooltip-actions {
+    background: #111827;
+    border-top-color: #374151;
+  }
+
+  .smt-action {
+    color: #9CA3AF;
+  }
+
+  .smt-action:hover {
+    background: #374151;
+    color: #F3F4F6;
+  }
+
+  .smt-progress {
+    background: #1F2937;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .smt-progress-bar {
+    background: #374151;
+  }
+
+  .smt-progress-text {
+    color: #D1D5DB;
+  }
+
+  .smt-notification {
+    background: #1F2937;
+    color: #F3F4F6;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .smt-notification-success {
+    background: #064E3B;
+    color: #A7F3D0;
+    border-color: #065F46;
+  }
+
+  .smt-notification-error {
+    background: #7F1D1D;
+    color: #FECACA;
+    border-color: #991B1B;
+  }
+
+  .smt-notification-info {
+    background: #1E3A8A;
+    color: #BFDBFE;
+    border-color: #1E40AF;
+  }
+
+  .smt-bilingual-translated {
+    color: #A5B4FC;
+    border-left-color: #6366F1;
+  }
+}
+
+/* === Print === */
 @media print {
-    #translate-floating-btn,
-    #translate-progress,
-    .translate-notification {
-        display: none !important;
-    }
+  .smt-ui {
+    display: none !important;
+  }
+
+  .smt-bilingual-translated {
+    color: #666 !important;
+  }
+}
+
+/* === Responsive === */
+@media (max-width: 480px) {
+  .smt-tooltip {
+    max-width: calc(100vw - 40px);
+    min-width: 160px;
+  }
+
+  .smt-progress {
+    left: 20px;
+    right: 20px;
+    min-width: auto;
+  }
 }

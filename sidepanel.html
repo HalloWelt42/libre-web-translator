@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Translator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F9FAFB;
+      color: #111827;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      color: white;
+      padding: 16px;
+      flex-shrink: 0;
+    }
+
+    header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: white;
+      border-bottom: 1px solid #E5E7EB;
+      flex-shrink: 0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 500;
+      color: #6B7280;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab:hover {
+      color: #4F46E5;
+      background: #F3F4F6;
+    }
+
+    .tab.active {
+      color: #4F46E5;
+      border-bottom-color: #4F46E5;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow: hidden;
+      flex-direction: column;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    /* Translate Tab */
+    .translate-section {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .lang-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .lang-selector select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .lang-selector select:focus {
+      outline: none;
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .swap-btn {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .swap-btn:hover {
+      background: #F3F4F6;
+      border-color: #4F46E5;
+    }
+
+    .swap-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: #6B7280;
+    }
+
+    .text-area {
+      position: relative;
+    }
+
+    .text-area textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      font-size: 14px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .text-area textarea:focus {
+      outline: none;
+      border-color: #4F46E5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .text-area label {
+      position: absolute;
+      top: -8px;
+      left: 10px;
+      background: white;
+      padding: 0 4px;
+      font-size: 12px;
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 12px;
+      color: #9CA3AF;
+      margin-top: 4px;
+    }
+
+    .translate-btn {
+      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .translate-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+
+    .translate-btn:active {
+      transform: translateY(0);
+    }
+
+    .translate-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .result-box {
+      background: #EEF2FF;
+      border: 1px solid #C7D2FE;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 80px;
+    }
+
+    .result-box.empty {
+      color: #9CA3AF;
+      font-style: italic;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .result-action {
+      padding: 6px 12px;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      background: white;
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .result-action:hover {
+      background: #F3F4F6;
+      border-color: #4F46E5;
+    }
+
+    .result-action svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* History Tab */
+    .history-section {
+      flex: 1;
+      overflow: auto;
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border-bottom: 1px solid #E5E7EB;
+      position: sticky;
+      top: 0;
+    }
+
+    .history-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .clear-btn {
+      padding: 6px 12px;
+      border: none;
+      background: #FEE2E2;
+      color: #DC2626;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .clear-btn:hover {
+      background: #FECACA;
+    }
+
+    .history-list {
+      padding: 8px;
+    }
+
+    .history-item {
+      background: white;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid #E5E7EB;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .history-item:hover {
+      border-color: #C7D2FE;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+    }
+
+    .history-original {
+      font-size: 12px;
+      color: #6B7280;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-translated {
+      font-size: 14px;
+      color: #111827;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-meta {
+      font-size: 11px;
+      color: #9CA3AF;
+      margin-top: 6px;
+    }
+
+    .history-empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #9CA3AF;
+    }
+
+    .history-empty svg {
+      width: 48px;
+      height: 48px;
+      fill: #D1D5DB;
+      margin-bottom: 12px;
+    }
+
+    /* Settings Tab */
+    .settings-section {
+      padding: 16px;
+      flex: 1;
+      overflow: auto;
+    }
+
+    .setting-group {
+      margin-bottom: 20px;
+    }
+
+    .setting-group h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6B7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border: 1px solid #E5E7EB;
+    }
+
+    .setting-label {
+      font-size: 14px;
+      color: #374151;
+    }
+
+    .setting-description {
+      font-size: 12px;
+      color: #9CA3AF;
+      margin-top: 2px;
+    }
+
+    /* Toggle Switch */
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #D1D5DB;
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: #4F46E5;
+    }
+
+    .toggle input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+    }
+
+    /* Footer */
+    footer {
+      padding: 12px 16px;
+      background: white;
+      border-top: 1px solid #E5E7EB;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    footer a {
+      color: #4F46E5;
+      text-decoration: none;
+      font-size: 12px;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #111827;
+        color: #F9FAFB;
+      }
+
+      .tabs {
+        background: #1F2937;
+        border-color: #374151;
+      }
+
+      .tab {
+        color: #9CA3AF;
+      }
+
+      .tab:hover {
+        background: #374151;
+      }
+
+      .tab.active {
+        color: #A5B4FC;
+        border-bottom-color: #A5B4FC;
+      }
+
+      .lang-selector select,
+      .text-area textarea,
+      .swap-btn,
+      .result-action,
+      .setting-item,
+      .history-item {
+        background: #1F2937;
+        border-color: #374151;
+        color: #F9FAFB;
+      }
+
+      .text-area label {
+        background: #111827;
+        color: #9CA3AF;
+      }
+
+      .result-box {
+        background: #1E3A5F;
+        border-color: #2563EB;
+      }
+
+      footer, .history-header {
+        background: #1F2937;
+        border-color: #374151;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+        </svg>
+        Smart Translator
+      </h1>
+    </header>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="translate">Übersetzen</div>
+      <div class="tab" data-tab="history">Verlauf</div>
+      <div class="tab" data-tab="settings">Optionen</div>
+    </div>
+
+    <!-- Translate Tab -->
+    <div class="tab-content active" id="translate">
+      <div class="translate-section">
+        <div class="lang-selector">
+          <select id="sourceLang">
+            <option value="auto">Automatisch</option>
+            <option value="en">Englisch</option>
+            <option value="de">Deutsch</option>
+            <option value="fr">Französisch</option>
+            <option value="es">Spanisch</option>
+            <option value="it">Italienisch</option>
+            <option value="pt">Portugiesisch</option>
+            <option value="nl">Niederländisch</option>
+            <option value="pl">Polnisch</option>
+            <option value="ru">Russisch</option>
+            <option value="zh">Chinesisch</option>
+            <option value="ja">Japanisch</option>
+            <option value="ko">Koreanisch</option>
+            <option value="ar">Arabisch</option>
+            <option value="tr">Türkisch</option>
+          </select>
+          <button class="swap-btn" id="swapLangs" title="Sprachen tauschen">
+            <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
+          </button>
+          <select id="targetLang">
+            <option value="de">Deutsch</option>
+            <option value="en">Englisch</option>
+            <option value="fr">Französisch</option>
+            <option value="es">Spanisch</option>
+            <option value="it">Italienisch</option>
+            <option value="pt">Portugiesisch</option>
+            <option value="nl">Niederländisch</option>
+            <option value="pl">Polnisch</option>
+            <option value="ru">Russisch</option>
+            <option value="zh">Chinesisch</option>
+            <option value="ja">Japanisch</option>
+            <option value="ko">Koreanisch</option>
+            <option value="ar">Arabisch</option>
+            <option value="tr">Türkisch</option>
+          </select>
+        </div>
+
+        <div class="text-area">
+          <label>Originaltext</label>
+          <textarea id="sourceText" placeholder="Text eingeben oder einfügen..."></textarea>
+          <div class="char-count"><span id="charCount">0</span> Zeichen</div>
+        </div>
+
+        <button class="translate-btn" id="translateBtn">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+          </svg>
+          Übersetzen
+        </button>
+
+        <div class="text-area">
+          <label>Übersetzung</label>
+          <div class="result-box empty" id="resultBox">Übersetzung erscheint hier...</div>
+          <div class="result-actions" id="resultActions" style="display: none;">
+            <button class="result-action" id="copyResult">
+              <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              Kopieren
+            </button>
+            <button class="result-action" id="speakResult">
+              <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+              Vorlesen
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- History Tab -->
+    <div class="tab-content" id="history">
+      <div class="history-section">
+        <div class="history-header">
+          <h2>Übersetzungsverlauf</h2>
+          <button class="clear-btn" id="clearHistory">Löschen</button>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">
+            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+            <p>Noch keine Übersetzungen</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="tab-content" id="settings">
+      <div class="settings-section">
+        <div class="setting-group">
+          <h3>Auslöser</h3>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Auswahl-Icon anzeigen</div>
+              <div class="setting-description">Kleines Icon bei Textauswahl</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="showSelectionIcon" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Doppelklick übersetzen</div>
+              <div class="setting-description">Wort per Doppelklick übersetzen</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="enableDoubleClick">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <h3>Anzeige</h3>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Original anzeigen</div>
+              <div class="setting-description">Originaltext im Tooltip zeigen</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="showOriginalInTooltip" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Alternativen anzeigen</div>
+              <div class="setting-description">Alternative Übersetzungen zeigen</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="showAlternatives" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Auto-Ausblenden</div>
+              <div class="setting-description">Tooltip automatisch schließen</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="tooltipAutoHide" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <h3>Sprachausgabe</h3>
+          <div class="setting-item">
+            <div>
+              <div class="setting-label">Text-to-Speech</div>
+              <div class="setting-description">Übersetzungen vorlesen</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="enableTTS">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <a href="#" id="openFullOptions">⚙️ Alle Einstellungen öffnen</a>
+    </footer>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

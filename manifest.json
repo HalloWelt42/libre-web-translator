@@ -1,13 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "Local Web Translator",
-  "version": "1.0",
-  "description": "Übersetzt Webseiten mit lokalem Übersetzungsservice",
+  "name": "Smart Web Translator",
+  "version": "2.0",
+  "description": "Intelligenter Übersetzer – markiere Text, nutze Tastenkürzel oder Rechtsklick. Keine störenden Buttons.",
 
   "permissions": [
     "activeTab",
     "storage",
-    "scripting"
+    "scripting",
+    "contextMenus",
+    "sidePanel"
   ],
 
   "host_permissions": [
@@ -23,16 +25,45 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "css": ["styles.css"]
+      "css": ["styles.css"],
+      "run_at": "document_end"
     }
   ],
 
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Seite übersetzen"
+    "default_title": "Smart Translator"
+  },
+
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
 
   "options_page": "options.html",
+
+  "commands": {
+    "translate-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+T",
+        "mac": "Command+Shift+T"
+      },
+      "description": "Markierten Text übersetzen"
+    },
+    "translate-page": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+P",
+        "mac": "Command+Shift+P"
+      },
+      "description": "Gesamte Seite übersetzen"
+    },
+    "toggle-sidepanel": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+S",
+        "mac": "Command+Shift+S"
+      },
+      "description": "Side Panel öffnen/schließen"
+    }
+  },
 
   "icons": {
     "16": "icons/icon16.png",

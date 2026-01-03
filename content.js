@@ -46,7 +46,8 @@ class SmartTranslator {
       'serviceUrl', 'apiKey', 'sourceLang', 'targetLang',
       'showSelectionIcon', 'selectionIconDelay', 'tooltipPosition',
       'tooltipAutoHide', 'tooltipAutoHideDelay', 'enableDoubleClick',
-      'showOriginalInTooltip', 'showAlternatives', 'enableTTS'
+      'showOriginalInTooltip', 'showAlternatives', 'enableTTS',
+      'skipCodeBlocks', 'skipBlockquotes'
     ]);
 
     this.settings.serviceUrl = this.settings.serviceUrl || 'http://localhost:5000/translate';
@@ -55,6 +56,8 @@ class SmartTranslator {
     this.settings.showSelectionIcon = this.settings.showSelectionIcon !== false;
     this.settings.selectionIconDelay = this.settings.selectionIconDelay || 200;
     this.settings.tooltipAutoHideDelay = this.settings.tooltipAutoHideDelay || 5000;
+    this.settings.skipCodeBlocks = this.settings.skipCodeBlocks !== false;
+    this.settings.skipBlockquotes = this.settings.skipBlockquotes !== false;
   }
 
   // === Cache Management ===
@@ -721,6 +724,9 @@ class SmartTranslator {
   }
 
   findTranslatableTextNodes() {
+    const skipCode = this.settings.skipCodeBlocks !== false;
+    const skipQuotes = this.settings.skipBlockquotes !== false;
+
     const walker = document.createTreeWalker(
       document.body,
       NodeFilter.SHOW_TEXT,
@@ -730,9 +736,46 @@ class SmartTranslator {
           if (!parent) return NodeFilter.FILTER_REJECT;
 
           const tag = parent.tagName.toLowerCase();
-          const excluded = ['script', 'style', 'code', 'pre', 'noscript', 'textarea', 'input', 'svg'];
-          if (excluded.includes(tag)) return NodeFilter.FILTER_REJECT;
+          
+          // Immer ausschließen: Scripts, Styles, Formulare, SVG
+          const alwaysExcluded = ['script', 'style', 'noscript', 'textarea', 'input', 'svg'];
+          if (alwaysExcluded.includes(tag)) return NodeFilter.FILTER_REJECT;
 
+          // Code-Elemente (konfigurierbar)
+          if (skipCode) {
+            const codeTags = ['code', 'pre', 'kbd', 'samp', 'var'];
+            if (codeTags.includes(tag)) return NodeFilter.FILTER_REJECT;
+            
+            // Elemente innerhalb von Code-Containern
+            if (parent.closest('code, pre, kbd, samp')) return NodeFilter.FILTER_REJECT;
+            
+            // Typische Code-Klassen (GitHub, StackOverflow, Prism, Highlight.js, etc.)
+            const codeClasses = [
+              'highlight', 'hljs', 'prism', 'codehilite', 'syntaxhighlighter',
+              'code-block', 'codeblock', 'sourceCode', 'source-code',
+              'language-', 'lang-', 'brush:', 'prettyprint',
+              'monaco-editor', 'ace_editor', 'CodeMirror'
+            ];
+            
+            const hasCodeClass = codeClasses.some(cls => 
+              parent.className?.includes?.(cls) || 
+              parent.closest(`[class*="${cls}"]`)
+            );
+            if (hasCodeClass) return NodeFilter.FILTER_REJECT;
+
+            // data-Attribute für Code
+            if (parent.closest('[data-language], [data-lang], [data-code]')) {
+              return NodeFilter.FILTER_REJECT;
+            }
+          }
+
+          // Zitate (konfigurierbar)
+          if (skipQuotes) {
+            if (tag === 'blockquote') return NodeFilter.FILTER_REJECT;
+            if (parent.closest('blockquote')) return NodeFilter.FILTER_REJECT;
+          }
+
+          // Eigene UI-Elemente
           if (parent.closest('.smt-ui')) return NodeFilter.FILTER_REJECT;
           if (parent.closest('.smt-translated-text')) return NodeFilter.FILTER_REJECT;
           if (parent.closest('.smt-bilingual-wrapper')) return NodeFilter.FILTER_REJECT;

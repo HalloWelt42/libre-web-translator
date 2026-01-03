@@ -275,7 +275,11 @@ class TranslatorBackground {
       showOriginalInTooltip: true,
       showAlternatives: true,
       enableTTS: false,
-      ttsLanguage: 'de-DE'
+      ttsLanguage: 'de-DE',
+      skipCodeBlocks: true,
+      skipBlockquotes: true,
+      highlightTranslated: true,
+      bilingualPosition: 'below'
     };
     await chrome.storage.sync.set(defaults);
   }

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Smart Web Translator",
-  "version": "2.0",
-  "description": "Intelligenter Übersetzer – markiere Text, nutze Tastenkürzel oder Rechtsklick. Keine störenden Buttons.",
+  "version": "2.1",
+  "description": "Intelligenter Übersetzer mit Caching, PDF-Export und bilingualer Anzeige",
 
   "permissions": [
     "activeTab",
@@ -61,7 +61,7 @@
         "default": "Ctrl+Shift+S",
         "mac": "Command+Shift+S"
       },
-      "description": "Side Panel öffnen/schließen"
+      "description": "Side Panel öffnen"
     }
   },
 

@@ -5,16 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Translator</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --md-primary: #1976D2;
+      --md-primary-dark: #1565C0;
+      --md-primary-light: #BBDEFB;
+      --md-accent: #FF5722;
+      --md-success: #4CAF50;
+      --md-success-light: #C8E6C9;
+      --md-error: #F44336;
+      --md-error-light: #FFCDD2;
+      --md-warning: #FF9800;
+      --md-warning-light: #FFE0B2;
+      --md-surface: #FFFFFF;
+      --md-background: #FAFAFA;
+      --md-on-surface: #212121;
+      --md-on-surface-medium: #757575;
+      --md-divider: #E0E0E0;
     }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #F9FAFB;
-      color: #111827;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--md-background);
+      color: var(--md-on-surface);
       font-size: 14px;
       line-height: 1.5;
       min-height: 100vh;
@@ -26,57 +40,53 @@
       height: 100vh;
     }
 
-    /* Header */
     header {
-      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      background: var(--md-primary);
       color: white;
       padding: 16px;
       flex-shrink: 0;
     }
 
     header h1 {
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: 500;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
-    header h1 svg {
-      width: 20px;
-      height: 20px;
-    }
+    header svg { width: 24px; height: 24px; }
 
     /* Tabs */
     .tabs {
       display: flex;
-      background: white;
-      border-bottom: 1px solid #E5E7EB;
+      background: var(--md-surface);
+      border-bottom: 1px solid var(--md-divider);
       flex-shrink: 0;
     }
 
     .tab {
       flex: 1;
-      padding: 12px;
+      padding: 14px 8px;
       text-align: center;
       cursor: pointer;
       font-weight: 500;
-      color: #6B7280;
+      font-size: 13px;
+      color: var(--md-on-surface-medium);
       border-bottom: 2px solid transparent;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     .tab:hover {
-      color: #4F46E5;
-      background: #F3F4F6;
+      color: var(--md-primary);
+      background: var(--md-primary-light);
     }
 
     .tab.active {
-      color: #4F46E5;
-      border-bottom-color: #4F46E5;
+      color: var(--md-primary);
+      border-bottom-color: var(--md-primary);
     }
 
-    /* Tab Content */
     .tab-content {
       display: none;
       flex: 1;
@@ -88,7 +98,7 @@
       display: flex;
     }
 
-    /* Translate Tab */
+    /* Translate Section */
     .translate-section {
       padding: 16px;
       display: flex;
@@ -98,166 +108,186 @@
       overflow: auto;
     }
 
-    .lang-selector {
+    .lang-row {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .lang-selector select {
+    .lang-row select {
       flex: 1;
-      padding: 10px 12px;
-      border: 1px solid #D1D5DB;
-      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid var(--md-divider);
+      border-radius: 4px;
       font-size: 14px;
-      background: white;
-      cursor: pointer;
+      background: var(--md-surface);
+      color: var(--md-on-surface);
     }
 
-    .lang-selector select:focus {
+    .lang-row select:focus {
       outline: none;
-      border-color: #4F46E5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      border-color: var(--md-primary);
     }
 
     .swap-btn {
-      width: 36px;
-      height: 36px;
-      border: 1px solid #D1D5DB;
-      border-radius: 8px;
-      background: white;
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: var(--md-primary-light);
+      color: var(--md-primary);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease;
     }
 
     .swap-btn:hover {
-      background: #F3F4F6;
-      border-color: #4F46E5;
+      background: var(--md-primary);
+      color: white;
     }
 
-    .swap-btn svg {
-      width: 18px;
-      height: 18px;
-      fill: #6B7280;
-    }
+    .swap-btn svg { width: 20px; height: 20px; fill: currentColor; }
 
-    .text-area {
-      position: relative;
-    }
-
-    .text-area textarea {
+    textarea {
       width: 100%;
       min-height: 120px;
       padding: 12px;
-      border: 1px solid #D1D5DB;
-      border-radius: 8px;
+      border: 1px solid var(--md-divider);
+      border-radius: 4px;
       font-size: 14px;
       resize: vertical;
       font-family: inherit;
+      color: var(--md-on-surface);
+      background: var(--md-surface);
     }
 
-    .text-area textarea:focus {
+    textarea:focus {
       outline: none;
-      border-color: #4F46E5;
-      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      border-color: var(--md-primary);
     }
 
-    .text-area label {
-      position: absolute;
-      top: -8px;
-      left: 10px;
-      background: white;
-      padding: 0 4px;
-      font-size: 12px;
-      color: #6B7280;
-      font-weight: 500;
-    }
-
-    .char-count {
-      text-align: right;
-      font-size: 12px;
-      color: #9CA3AF;
-      margin-top: 4px;
-    }
-
-    .translate-btn {
-      background: linear-gradient(135deg, #4F46E5, #7C3AED);
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    .btn {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .translate-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    .btn-primary {
+      background: var(--md-primary);
+      color: white;
     }
 
-    .translate-btn:active {
-      transform: translateY(0);
+    .btn-primary:hover {
+      background: var(--md-primary-dark);
     }
 
-    .translate-btn:disabled {
-      opacity: 0.6;
+    .btn-primary:disabled {
+      background: #BDBDBD;
       cursor: not-allowed;
-      transform: none;
     }
+
+    .btn svg { width: 18px; height: 18px; fill: currentColor; }
 
     .result-box {
-      background: #EEF2FF;
-      border: 1px solid #C7D2FE;
+      padding: 16px;
+      background: var(--md-primary-light);
       border-radius: 8px;
-      padding: 12px;
       min-height: 80px;
+      color: var(--md-on-surface);
+      line-height: 1.6;
     }
 
-    .result-box.empty {
-      color: #9CA3AF;
-      font-style: italic;
+    .result-box.error {
+      background: var(--md-error-light);
+      color: var(--md-error);
     }
 
     .result-actions {
       display: flex;
       gap: 8px;
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     .result-action {
-      padding: 6px 12px;
-      border: 1px solid #D1D5DB;
-      border-radius: 6px;
-      background: white;
+      padding: 8px 14px;
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 4px;
       font-size: 12px;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 4px;
-      transition: all 0.15s ease;
+      gap: 6px;
     }
 
     .result-action:hover {
-      background: #F3F4F6;
-      border-color: #4F46E5;
+      background: var(--md-primary-light);
+      border-color: var(--md-primary);
+      color: var(--md-primary);
     }
 
-    .result-action svg {
-      width: 14px;
-      height: 14px;
-      fill: currentColor;
+    .result-action svg { width: 16px; height: 16px; fill: currentColor; }
+
+    /* Actions Grid */
+    .actions-section {
+      padding: 16px;
+      border-top: 1px solid var(--md-divider);
     }
 
-    /* History Tab */
+    .actions-section h3 {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--md-on-surface-medium);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .action-card {
+      padding: 14px 8px;
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .action-card:hover {
+      border-color: var(--md-primary);
+      background: var(--md-primary-light);
+    }
+
+    .action-card svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--md-primary);
+      margin-bottom: 6px;
+    }
+
+    .action-card span {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--md-on-surface);
+    }
+
+    /* History */
     .history-section {
       flex: 1;
       overflow: auto;
@@ -267,56 +297,55 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 16px;
-      background: white;
-      border-bottom: 1px solid #E5E7EB;
+      padding: 14px 16px;
+      background: var(--md-surface);
+      border-bottom: 1px solid var(--md-divider);
       position: sticky;
       top: 0;
     }
 
     .history-header h2 {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 500;
     }
 
     .clear-btn {
-      padding: 6px 12px;
+      padding: 6px 14px;
+      background: var(--md-error-light);
+      color: var(--md-error);
       border: none;
-      background: #FEE2E2;
-      color: #DC2626;
-      border-radius: 6px;
+      border-radius: 4px;
       font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.15s ease;
     }
 
     .clear-btn:hover {
-      background: #FECACA;
+      background: var(--md-error);
+      color: white;
     }
 
     .history-list {
-      padding: 8px;
+      padding: 12px;
     }
 
     .history-item {
-      background: white;
+      background: var(--md-surface);
       border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 8px;
-      border: 1px solid #E5E7EB;
+      padding: 14px;
+      margin-bottom: 10px;
+      border: 1px solid var(--md-divider);
       cursor: pointer;
-      transition: all 0.15s ease;
     }
 
     .history-item:hover {
-      border-color: #C7D2FE;
-      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+      border-color: var(--md-primary);
     }
 
     .history-original {
       font-size: 12px;
-      color: #6B7280;
-      margin-bottom: 4px;
+      color: var(--md-on-surface-medium);
+      margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -324,7 +353,7 @@
 
     .history-translated {
       font-size: 14px;
-      color: #111827;
+      color: var(--md-on-surface);
       font-weight: 500;
       white-space: nowrap;
       overflow: hidden;
@@ -333,193 +362,216 @@
 
     .history-meta {
       font-size: 11px;
-      color: #9CA3AF;
-      margin-top: 6px;
+      color: var(--md-on-surface-medium);
+      margin-top: 8px;
     }
 
     .history-empty {
       text-align: center;
       padding: 40px 20px;
-      color: #9CA3AF;
+      color: var(--md-on-surface-medium);
     }
 
     .history-empty svg {
       width: 48px;
       height: 48px;
-      fill: #D1D5DB;
+      fill: var(--md-divider);
       margin-bottom: 12px;
     }
 
-    /* Settings Tab */
-    .settings-section {
-      padding: 16px;
+    /* Cache Section */
+    .cache-section {
       flex: 1;
       overflow: auto;
+      padding: 16px;
     }
 
-    .setting-group {
+    .cache-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
       margin-bottom: 20px;
     }
 
-    .setting-group h3 {
-      font-size: 12px;
-      font-weight: 600;
-      color: #6B7280;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
+    .cache-stat {
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
     }
 
-    .setting-item {
+    .cache-stat .value {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--md-primary);
+    }
+
+    .cache-stat .label {
+      font-size: 12px;
+      color: var(--md-on-surface-medium);
+      margin-top: 4px;
+    }
+
+    .cache-actions {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cache-actions .btn {
+      flex: 1;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--md-primary);
+      border: 1px solid var(--md-primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--md-primary-light);
+    }
+
+    .btn-danger {
+      background: var(--md-error);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #D32F2F;
+    }
+
+    .cache-list {
+      border: 1px solid var(--md-divider);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .cache-item {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px;
-      background: white;
-      border-radius: 8px;
-      margin-bottom: 8px;
-      border: 1px solid #E5E7EB;
+      padding: 14px 16px;
+      background: var(--md-surface);
+      border-bottom: 1px solid var(--md-divider);
     }
 
-    .setting-label {
-      font-size: 14px;
-      color: #374151;
+    .cache-item:last-child {
+      border-bottom: none;
     }
 
-    .setting-description {
-      font-size: 12px;
-      color: #9CA3AF;
-      margin-top: 2px;
+    .cache-item-info {
+      flex: 1;
+      min-width: 0;
     }
 
-    /* Toggle Switch */
-    .toggle {
-      position: relative;
-      width: 44px;
-      height: 24px;
+    .cache-item-url {
+      font-size: 13px;
+      color: var(--md-on-surface);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
+    .cache-item-meta {
+      font-size: 11px;
+      color: var(--md-on-surface-medium);
+      margin-top: 4px;
     }
 
-    .toggle-slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #D1D5DB;
-      border-radius: 24px;
-      transition: 0.3s;
+    .cache-item-actions {
+      display: flex;
+      gap: 8px;
     }
 
-    .toggle-slider:before {
-      position: absolute;
-      content: "";
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background: white;
+    .cache-item-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
       border-radius: 50%;
-      transition: 0.3s;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--md-on-surface-medium);
     }
 
-    .toggle input:checked + .toggle-slider {
-      background: #4F46E5;
+    .cache-item-btn:hover {
+      background: var(--md-divider);
     }
 
-    .toggle input:checked + .toggle-slider:before {
-      transform: translateX(20px);
+    .cache-item-btn.delete:hover {
+      background: var(--md-error-light);
+      color: var(--md-error);
     }
 
-    /* Footer */
+    .cache-item-btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+    .cache-empty {
+      text-align: center;
+      padding: 40px;
+      color: var(--md-on-surface-medium);
+    }
+
     footer {
       padding: 12px 16px;
-      background: white;
-      border-top: 1px solid #E5E7EB;
+      background: var(--md-surface);
+      border-top: 1px solid var(--md-divider);
       text-align: center;
       flex-shrink: 0;
     }
 
     footer a {
-      color: #4F46E5;
+      color: var(--md-primary);
       text-decoration: none;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 500;
     }
 
-    footer a:hover {
-      text-decoration: underline;
-    }
-
-    /* Loading Spinner */
     .spinner {
       width: 18px;
       height: 18px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid rgba(255,255,255,0.3);
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #323232;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 1000;
+      animation: fadeInOut 2s ease forwards;
     }
 
-    /* Dark Mode */
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      85% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
     @media (prefers-color-scheme: dark) {
-      body {
-        background: #111827;
-        color: #F9FAFB;
+      :root {
+        --md-surface: #424242;
+        --md-background: #303030;
+        --md-on-surface: #FFFFFF;
+        --md-on-surface-medium: #B0B0B0;
+        --md-divider: #616161;
+        --md-primary-light: #1565C0;
       }
 
-      .tabs {
-        background: #1F2937;
-        border-color: #374151;
-      }
-
-      .tab {
-        color: #9CA3AF;
-      }
-
-      .tab:hover {
-        background: #374151;
-      }
-
-      .tab.active {
-        color: #A5B4FC;
-        border-bottom-color: #A5B4FC;
-      }
-
-      .lang-selector select,
-      .text-area textarea,
-      .swap-btn,
-      .result-action,
-      .setting-item,
-      .history-item {
-        background: #1F2937;
-        border-color: #374151;
-        color: #F9FAFB;
-      }
-
-      .text-area label {
-        background: #111827;
-        color: #9CA3AF;
-      }
-
-      .result-box {
-        background: #1E3A5F;
-        border-color: #2563EB;
-      }
-
-      footer, .history-header {
-        background: #1F2937;
-        border-color: #374151;
-      }
+      textarea, select { background: #505050; border-color: #616161; color: white; }
     }
   </style>
 </head>
@@ -537,13 +589,13 @@
     <div class="tabs">
       <div class="tab active" data-tab="translate">Übersetzen</div>
       <div class="tab" data-tab="history">Verlauf</div>
-      <div class="tab" data-tab="settings">Optionen</div>
+      <div class="tab" data-tab="cache">Cache</div>
     </div>
 
     <!-- Translate Tab -->
     <div class="tab-content active" id="translate">
       <div class="translate-section">
-        <div class="lang-selector">
+        <div class="lang-row">
           <select id="sourceLang">
             <option value="auto">Automatisch</option>
             <option value="en">Englisch</option>
@@ -552,16 +604,11 @@
             <option value="es">Spanisch</option>
             <option value="it">Italienisch</option>
             <option value="pt">Portugiesisch</option>
-            <option value="nl">Niederländisch</option>
-            <option value="pl">Polnisch</option>
             <option value="ru">Russisch</option>
             <option value="zh">Chinesisch</option>
             <option value="ja">Japanisch</option>
-            <option value="ko">Koreanisch</option>
-            <option value="ar">Arabisch</option>
-            <option value="tr">Türkisch</option>
           </select>
-          <button class="swap-btn" id="swapLangs" title="Sprachen tauschen">
+          <button class="swap-btn" id="swapLangs">
             <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
           </button>
           <select id="targetLang">
@@ -571,42 +618,58 @@
             <option value="es">Spanisch</option>
             <option value="it">Italienisch</option>
             <option value="pt">Portugiesisch</option>
-            <option value="nl">Niederländisch</option>
-            <option value="pl">Polnisch</option>
             <option value="ru">Russisch</option>
             <option value="zh">Chinesisch</option>
             <option value="ja">Japanisch</option>
-            <option value="ko">Koreanisch</option>
-            <option value="ar">Arabisch</option>
-            <option value="tr">Türkisch</option>
           </select>
         </div>
 
-        <div class="text-area">
-          <label>Originaltext</label>
-          <textarea id="sourceText" placeholder="Text eingeben oder einfügen..."></textarea>
-          <div class="char-count"><span id="charCount">0</span> Zeichen</div>
-        </div>
+        <textarea id="sourceText" placeholder="Text eingeben..."></textarea>
 
-        <button class="translate-btn" id="translateBtn">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-            <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
-          </svg>
+        <button class="btn btn-primary" id="translateBtn">
+          <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
           Übersetzen
         </button>
 
-        <div class="text-area">
-          <label>Übersetzung</label>
-          <div class="result-box empty" id="resultBox">Übersetzung erscheint hier...</div>
-          <div class="result-actions" id="resultActions" style="display: none;">
-            <button class="result-action" id="copyResult">
-              <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-              Kopieren
-            </button>
-            <button class="result-action" id="speakResult">
-              <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
-              Vorlesen
-            </button>
+        <div class="result-box" id="resultBox">Übersetzung erscheint hier...</div>
+        <div class="result-actions" id="resultActions" style="display: none;">
+          <button class="result-action" id="copyResult">
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+            Kopieren
+          </button>
+          <button class="result-action" id="speakResult">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+            Vorlesen
+          </button>
+        </div>
+      </div>
+
+      <div class="actions-section">
+        <h3>Seitenaktionen</h3>
+        <div class="actions-grid">
+          <div class="action-card" id="translatePage">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+            <span>Seite</span>
+          </div>
+          <div class="action-card" id="bilingualPage">
+            <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
+            <span>Bilingual</span>
+          </div>
+          <div class="action-card" id="toggleTranslation">
+            <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+            <span>Toggle</span>
+          </div>
+          <div class="action-card" id="restorePage">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+            <span>Original</span>
+          </div>
+          <div class="action-card" id="loadCache">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+            <span>Cache laden</span>
+          </div>
+          <div class="action-card" id="exportPdf">
+            <svg viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
+            <span>PDF</span>
           </div>
         </div>
       </div>
@@ -628,85 +691,39 @@
       </div>
     </div>
 
-    <!-- Settings Tab -->
-    <div class="tab-content" id="settings">
-      <div class="settings-section">
-        <div class="setting-group">
-          <h3>Auslöser</h3>
-          <div class="setting-item">
-            <div>
-              <div class="setting-label">Auswahl-Icon anzeigen</div>
-              <div class="setting-description">Kleines Icon bei Textauswahl</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="showSelectionIcon" checked>
-              <span class="toggle-slider"></span>
-            </label>
+    <!-- Cache Tab -->
+    <div class="tab-content" id="cache">
+      <div class="cache-section">
+        <div class="cache-stats">
+          <div class="cache-stat">
+            <div class="value" id="cacheTotalSize">0 KB</div>
+            <div class="label">Gesamtgröße</div>
           </div>
-          <div class="setting-item">
-            <div>
-              <div class="setting-label">Doppelklick übersetzen</div>
-              <div class="setting-description">Wort per Doppelklick übersetzen</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="enableDoubleClick">
-              <span class="toggle-slider"></span>
-            </label>
+          <div class="cache-stat">
+            <div class="value" id="cachePageCount">0</div>
+            <div class="label">Seiten</div>
           </div>
         </div>
 
-        <div class="setting-group">
-          <h3>Anzeige</h3>
-          <div class="setting-item">
-            <div>
-              <div class="setting-label">Original anzeigen</div>
-              <div class="setting-description">Originaltext im Tooltip zeigen</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="showOriginalInTooltip" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-item">
-            <div>
-              <div class="setting-label">Alternativen anzeigen</div>
-              <div class="setting-description">Alternative Übersetzungen zeigen</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="showAlternatives" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="setting-item">
-            <div>
-              <div class="setting-label">Auto-Ausblenden</div>
-              <div class="setting-description">Tooltip automatisch schließen</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="tooltipAutoHide" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
+        <div class="cache-actions">
+          <button class="btn btn-outline" id="refreshCache">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            Aktualisieren
+          </button>
+          <button class="btn btn-danger" id="clearAllCache">
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            Alles löschen
+          </button>
         </div>
 
-        <div class="setting-group">
-          <h3>Sprachausgabe</h3>
-          <div class="setting-item">
-            <div>
-              <div class="setting-label">Text-to-Speech</div>
-              <div class="setting-description">Übersetzungen vorlesen</div>
-            </div>
-            <label class="toggle">
-              <input type="checkbox" id="enableTTS">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
+        <div class="cache-list" id="cacheList">
+          <div class="cache-empty">Kein Cache vorhanden</div>
         </div>
       </div>
     </div>
 
     <footer>
-      <a href="#" id="openFullOptions">⚙️ Alle Einstellungen öffnen</a>
+      <a href="#" id="openOptions">⚙️ Einstellungen öffnen</a>
     </footer>
   </div>
 

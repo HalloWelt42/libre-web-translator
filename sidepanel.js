@@ -1,8 +1,8 @@
-// Side Panel JavaScript - Smart Web Translator v2.0
+// Side Panel JavaScript - Smart Web Translator v2.1
 
 class SidePanelController {
   constructor() {
-    this.settings = {};
+    this.currentTranslation = '';
     this.init();
   }
 
@@ -11,25 +11,15 @@ class SidePanelController {
     this.setupTabs();
     this.setupTranslation();
     this.setupHistory();
-    this.setupSettings();
+    this.setupCache();
+    this.setupActions();
     this.setupMessageListener();
   }
 
   async loadSettings() {
-    this.settings = await chrome.storage.sync.get([
-      'sourceLang', 'targetLang', 'showSelectionIcon', 'enableDoubleClick',
-      'showOriginalInTooltip', 'showAlternatives', 'tooltipAutoHide', 'enableTTS'
-    ]);
-
-    // UI aktualisieren
-    document.getElementById('sourceLang').value = this.settings.sourceLang || 'auto';
-    document.getElementById('targetLang').value = this.settings.targetLang || 'de';
-    document.getElementById('showSelectionIcon').checked = this.settings.showSelectionIcon !== false;
-    document.getElementById('enableDoubleClick').checked = this.settings.enableDoubleClick || false;
-    document.getElementById('showOriginalInTooltip').checked = this.settings.showOriginalInTooltip !== false;
-    document.getElementById('showAlternatives').checked = this.settings.showAlternatives !== false;
-    document.getElementById('tooltipAutoHide').checked = this.settings.tooltipAutoHide !== false;
-    document.getElementById('enableTTS').checked = this.settings.enableTTS || false;
+    const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+    document.getElementById('sourceLang').value = settings.sourceLang || 'auto';
+    document.getElementById('targetLang').value = settings.targetLang || 'de';
   }
 
   setupTabs() {
@@ -46,10 +36,8 @@ class SidePanelController {
         tab.classList.add('active');
         document.getElementById(targetId).classList.add('active');
 
-        // Verlauf laden wenn Tab gewechselt wird
-        if (targetId === 'history') {
-          this.loadHistory();
-        }
+        if (targetId === 'history') this.loadHistory();
+        if (targetId === 'cache') this.loadCache();
       });
     });
   }
@@ -59,20 +47,9 @@ class SidePanelController {
     const translateBtn = document.getElementById('translateBtn');
     const resultBox = document.getElementById('resultBox');
     const resultActions = document.getElementById('resultActions');
-    const charCount = document.getElementById('charCount');
-    const swapBtn = document.getElementById('swapLangs');
-    const copyBtn = document.getElementById('copyResult');
-    const speakBtn = document.getElementById('speakResult');
 
-    // Zeichen zählen
-    sourceText.addEventListener('input', () => {
-      charCount.textContent = sourceText.value.length;
-    });
-
-    // Übersetzen
     translateBtn.addEventListener('click', () => this.translate());
 
-    // Enter zum Übersetzen (Shift+Enter für neue Zeile)
     sourceText.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -80,36 +57,31 @@ class SidePanelController {
       }
     });
 
-    // Sprachen tauschen
-    swapBtn.addEventListener('click', () => {
-      const sourceLang = document.getElementById('sourceLang');
-      const targetLang = document.getElementById('targetLang');
-
-      if (sourceLang.value !== 'auto') {
-        const temp = sourceLang.value;
-        sourceLang.value = targetLang.value;
-        targetLang.value = temp;
-        this.saveLanguageSettings();
+    document.getElementById('swapLangs').addEventListener('click', () => {
+      const source = document.getElementById('sourceLang');
+      const target = document.getElementById('targetLang');
+      if (source.value !== 'auto') {
+        const temp = source.value;
+        source.value = target.value;
+        target.value = temp;
+        this.saveLanguages();
       }
     });
 
-    // Kopieren
-    copyBtn.addEventListener('click', () => {
-      const text = resultBox.textContent;
-      navigator.clipboard.writeText(text);
+    document.getElementById('copyResult').addEventListener('click', () => {
+      navigator.clipboard.writeText(this.currentTranslation);
       this.showToast('Kopiert!');
     });
 
-    // Vorlesen
-    speakBtn.addEventListener('click', () => {
-      const text = resultBox.textContent;
+    document.getElementById('speakResult').addEventListener('click', () => {
       const targetLang = document.getElementById('targetLang').value;
-      this.speak(text, targetLang);
+      const utterance = new SpeechSynthesisUtterance(this.currentTranslation);
+      utterance.lang = this.getLangCode(targetLang);
+      speechSynthesis.speak(utterance);
     });
 
-    // Sprache speichern bei Änderung
-    document.getElementById('sourceLang').addEventListener('change', () => this.saveLanguageSettings());
-    document.getElementById('targetLang').addEventListener('change', () => this.saveLanguageSettings());
+    document.getElementById('sourceLang').addEventListener('change', () => this.saveLanguages());
+    document.getElementById('targetLang').addEventListener('change', () => this.saveLanguages());
   }
 
   async translate() {
@@ -123,11 +95,8 @@ class SidePanelController {
     const sourceLang = document.getElementById('sourceLang').value;
     const targetLang = document.getElementById('targetLang').value;
 
-    // Loading State
     translateBtn.disabled = true;
     translateBtn.innerHTML = '<div class="spinner"></div> Übersetze...';
-    resultBox.textContent = 'Übersetze...';
-    resultBox.classList.add('empty');
 
     try {
       const result = await chrome.runtime.sendMessage({
@@ -137,12 +106,13 @@ class SidePanelController {
         target: targetLang
       });
 
+      resultBox.classList.remove('error');
+
       if (result.success) {
         resultBox.textContent = result.translatedText;
-        resultBox.classList.remove('empty');
+        this.currentTranslation = result.translatedText;
         resultActions.style.display = 'flex';
 
-        // Zum Verlauf hinzufügen
         await chrome.runtime.sendMessage({
           action: 'addToHistory',
           entry: {
@@ -154,43 +124,61 @@ class SidePanelController {
           }
         });
       } else {
-        resultBox.textContent = 'Fehler: ' + (result.error || 'Unbekannter Fehler');
-        resultBox.classList.add('empty');
+        resultBox.textContent = 'Fehler: ' + (result.error || 'Unbekannt');
+        resultBox.classList.add('error');
       }
     } catch (error) {
-      resultBox.textContent = 'Verbindungsfehler';
-      resultBox.classList.add('empty');
+      resultBox.textContent = 'Verbindungsfehler: ' + error.message;
+      resultBox.classList.add('error');
     }
 
-    // Reset Button
     translateBtn.disabled = false;
     translateBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-        <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
-      </svg>
+      <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
       Übersetzen
     `;
   }
 
-  async saveLanguageSettings() {
+  async saveLanguages() {
     const sourceLang = document.getElementById('sourceLang').value;
     const targetLang = document.getElementById('targetLang').value;
     await chrome.storage.sync.set({ sourceLang, targetLang });
   }
 
-  setupHistory() {
-    const clearBtn = document.getElementById('clearHistory');
+  setupActions() {
+    document.getElementById('translatePage').addEventListener('click', () => this.sendPageAction('translatePage', { mode: 'replace' }));
+    document.getElementById('bilingualPage').addEventListener('click', () => this.sendPageAction('translatePage', { mode: 'bilingual' }));
+    document.getElementById('toggleTranslation').addEventListener('click', () => this.sendPageAction('toggleTranslation'));
+    document.getElementById('restorePage').addEventListener('click', () => this.sendPageAction('restorePage'));
+    document.getElementById('loadCache').addEventListener('click', () => this.sendPageAction('loadCachedTranslation'));
+    document.getElementById('exportPdf').addEventListener('click', () => this.sendPageAction('exportPdf'));
 
-    clearBtn.addEventListener('click', async () => {
+    document.getElementById('openOptions').addEventListener('click', (e) => {
+      e.preventDefault();
+      chrome.runtime.openOptionsPage();
+    });
+  }
+
+  async sendPageAction(action, data = {}) {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab) {
+        await chrome.tabs.sendMessage(tab.id, { action, ...data });
+        this.showToast('Aktion ausgeführt');
+      }
+    } catch (e) {
+      this.showToast('Fehler: Seite nicht erreichbar');
+    }
+  }
+
+  setupHistory() {
+    document.getElementById('clearHistory').addEventListener('click', async () => {
       if (confirm('Verlauf wirklich löschen?')) {
         await chrome.runtime.sendMessage({ action: 'clearHistory' });
         this.loadHistory();
         this.showToast('Verlauf gelöscht');
       }
     });
-
-    // Initial laden
-    this.loadHistory();
   }
 
   async loadHistory() {
@@ -218,85 +206,107 @@ class SidePanelController {
         </div>
       `).join('');
 
-      // Klick-Handler für Verlaufseinträge
       historyList.querySelectorAll('.history-item').forEach(item => {
         item.addEventListener('click', () => {
           document.getElementById('sourceText').value = item.dataset.original;
           document.getElementById('resultBox').textContent = item.dataset.translated;
-          document.getElementById('resultBox').classList.remove('empty');
+          this.currentTranslation = item.dataset.translated;
           document.getElementById('resultActions').style.display = 'flex';
-          document.getElementById('charCount').textContent = item.dataset.original.length;
-
-          // Zum Übersetzen-Tab wechseln
           document.querySelector('.tab[data-tab="translate"]').click();
         });
       });
-
-    } catch (error) {
-      console.error('Fehler beim Laden des Verlaufs:', error);
+    } catch (e) {
+      console.error('History error:', e);
     }
   }
 
-  setupSettings() {
-    const settingsInputs = [
-      'showSelectionIcon', 'enableDoubleClick', 'showOriginalInTooltip',
-      'showAlternatives', 'tooltipAutoHide', 'enableTTS'
-    ];
-
-    settingsInputs.forEach(id => {
-      const input = document.getElementById(id);
-      if (input) {
-        input.addEventListener('change', () => {
-          this.saveSettings();
-        });
+  setupCache() {
+    document.getElementById('refreshCache').addEventListener('click', () => this.loadCache());
+    document.getElementById('clearAllCache').addEventListener('click', async () => {
+      if (confirm('Gesamten Cache löschen?')) {
+        await this.sendPageAction('clearCache');
+        this.loadCache();
+        this.showToast('Cache gelöscht');
       }
-    });
-
-    // Vollständige Einstellungen öffnen
-    document.getElementById('openFullOptions').addEventListener('click', (e) => {
-      e.preventDefault();
-      chrome.runtime.openOptionsPage();
     });
   }
 
-  async saveSettings() {
-    const settings = {
-      showSelectionIcon: document.getElementById('showSelectionIcon').checked,
-      enableDoubleClick: document.getElementById('enableDoubleClick').checked,
-      showOriginalInTooltip: document.getElementById('showOriginalInTooltip').checked,
-      showAlternatives: document.getElementById('showAlternatives').checked,
-      tooltipAutoHide: document.getElementById('tooltipAutoHide').checked,
-      enableTTS: document.getElementById('enableTTS').checked
-    };
+  async loadCache() {
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (!tab) return;
 
-    await chrome.storage.sync.set(settings);
-    this.showToast('Einstellungen gespeichert');
+      const response = await chrome.tabs.sendMessage(tab.id, { action: 'getCacheInfo' });
+
+      if (!response) {
+        document.getElementById('cacheList').innerHTML = '<div class="cache-empty">Seite nicht erreichbar</div>';
+        return;
+      }
+
+      document.getElementById('cacheTotalSize').textContent = this.formatBytes(response.size);
+      document.getElementById('cachePageCount').textContent = response.entries.length;
+
+      const cacheList = document.getElementById('cacheList');
+
+      if (response.entries.length === 0) {
+        cacheList.innerHTML = '<div class="cache-empty">Kein Cache vorhanden</div>';
+        return;
+      }
+
+      cacheList.innerHTML = response.entries.map(entry => `
+        <div class="cache-item" data-key="${entry.key}">
+          <div class="cache-item-info">
+            <div class="cache-item-url">${this.escapeHtml(entry.url)}</div>
+            <div class="cache-item-meta">${entry.count} Übersetzungen · ${this.formatBytes(entry.size)} · ${this.formatDate(entry.timestamp)}</div>
+          </div>
+          <div class="cache-item-actions">
+            <button class="cache-item-btn delete" title="Löschen">
+              <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      cacheList.querySelectorAll('.cache-item-btn.delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const item = btn.closest('.cache-item');
+          const key = item.dataset.key;
+          await chrome.tabs.sendMessage(tab.id, { action: 'clearCache', key });
+          item.remove();
+          this.loadCache();
+          this.showToast('Cache-Eintrag gelöscht');
+        });
+      });
+    } catch (e) {
+      console.error('Cache error:', e);
+      document.getElementById('cacheList').innerHTML = '<div class="cache-empty">Fehler beim Laden</div>';
+    }
   }
 
   setupMessageListener() {
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (request.action === 'sidepanel-translate') {
         document.getElementById('sourceText').value = request.text;
-        document.getElementById('charCount').textContent = request.text.length;
         this.translate();
+      } else if (request.action === 'sidepanel-show-cache') {
+        document.querySelector('.tab[data-tab="cache"]').click();
       }
     });
-  }
-
-  speak(text, lang) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = this.getLangCode(lang);
-    speechSynthesis.speak(utterance);
   }
 
   getLangCode(lang) {
     const codes = {
       'de': 'de-DE', 'en': 'en-US', 'fr': 'fr-FR', 'es': 'es-ES',
-      'it': 'it-IT', 'pt': 'pt-PT', 'nl': 'nl-NL', 'pl': 'pl-PL',
-      'ru': 'ru-RU', 'zh': 'zh-CN', 'ja': 'ja-JP', 'ko': 'ko-KR',
-      'ar': 'ar-SA', 'tr': 'tr-TR'
+      'it': 'it-IT', 'pt': 'pt-PT', 'ru': 'ru-RU', 'zh': 'zh-CN', 'ja': 'ja-JP'
     };
     return codes[lang] || 'en-US';
+  }
+
+  formatBytes(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
   }
 
   formatDate(timestamp) {
@@ -307,8 +317,6 @@ class SidePanelController {
     if (diff < 60000) return 'Gerade eben';
     if (diff < 3600000) return `vor ${Math.floor(diff / 60000)} Min.`;
     if (diff < 86400000) return `vor ${Math.floor(diff / 3600000)} Std.`;
-    if (diff < 604800000) return `vor ${Math.floor(diff / 86400000)} Tagen`;
-
     return date.toLocaleDateString('de-DE');
   }
 
@@ -329,37 +337,9 @@ class SidePanelController {
     const toast = document.createElement('div');
     toast.className = 'toast';
     toast.textContent = message;
-    toast.style.cssText = `
-      position: fixed;
-      bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1F2937;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 13px;
-      z-index: 1000;
-      animation: fadeInOut 2s ease forwards;
-    `;
-
     document.body.appendChild(toast);
-
     setTimeout(() => toast.remove(), 2000);
   }
 }
 
-// CSS für Toast Animation
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes fadeInOut {
-    0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
-    15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-    85% { opacity: 1; transform: translateX(-50%) translateY(0); }
-    100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-  }
-`;
-document.head.appendChild(style);
-
-// Initialisieren
 new SidePanelController();

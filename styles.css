@@ -1,32 +1,90 @@
-/* Smart Web Translator v2.0 - Elegante, nicht-störende Styles */
+/* Smart Web Translator v2.1 - Material Design */
+
+/* === Material Design Farben === */
+:root {
+  --md-primary: #1976D2;
+  --md-primary-dark: #1565C0;
+  --md-primary-light: #BBDEFB;
+  --md-accent: #FF5722;
+  --md-success: #4CAF50;
+  --md-error: #F44336;
+  --md-warning: #FF9800;
+  --md-surface: #FFFFFF;
+  --md-background: #FAFAFA;
+  --md-on-surface: #212121;
+  --md-on-surface-medium: #757575;
+  --md-divider: #BDBDBD;
+  --md-elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  --md-elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  --md-elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+}
 
 /* === Basis === */
 .smt-ui {
   all: initial;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif !important;
+  font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
   box-sizing: border-box !important;
   line-height: 1.5 !important;
+  -webkit-font-smoothing: antialiased;
 }
 
 .smt-ui * {
   box-sizing: border-box !important;
 }
 
-/* === Selection Icon (kleines Übersetzen-Icon) === */
+/* === Cache Indicator (roter Button oben rechts) === */
+.smt-cache-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483646;
+  background: var(--md-error);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: var(--md-elevation-2);
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.smt-cache-indicator.smt-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.smt-cache-indicator:hover {
+  background: #D32F2F;
+  box-shadow: var(--md-elevation-3);
+}
+
+.smt-cache-indicator svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+
+/* === Selection Icon === */
 .smt-selection-icon {
-  width: 28px;
-  height: 28px;
-  background: #4F46E5;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  background: var(--md-primary);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 2147483646;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3), 0 1px 2px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--md-elevation-2);
   opacity: 0;
-  transform: scale(0.8);
-  transition: all 0.15s ease-out;
+  transform: scale(0.5);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .smt-selection-icon.smt-visible {
@@ -35,9 +93,9 @@
 }
 
 .smt-selection-icon:hover {
-  background: #4338CA;
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  background: var(--md-primary-dark);
+  transform: scale(1.1);
+  box-shadow: var(--md-elevation-3);
 }
 
 .smt-selection-icon:active {
@@ -45,25 +103,24 @@
 }
 
 .smt-selection-icon svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   fill: white;
 }
 
-/* === Tooltip (Übersetzungsergebnis) === */
+/* === Tooltip === */
 .smt-tooltip {
   position: absolute;
   z-index: 2147483647;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
-  max-width: 400px;
-  min-width: 200px;
+  background: var(--md-surface);
+  border-radius: 8px;
+  box-shadow: var(--md-elevation-3);
+  max-width: 420px;
+  min-width: 220px;
   opacity: 0;
   transform: translateX(-50%) translateY(8px);
-  transition: all 0.2s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .smt-tooltip.smt-visible {
@@ -71,38 +128,36 @@
   transform: translateX(-50%) translateY(0);
 }
 
-.smt-tooltip.smt-above {
-  transform: translateX(-50%) translateY(-100%) translateY(-18px);
-}
-
-.smt-tooltip.smt-above.smt-visible {
-  transform: translateX(-50%) translateY(-100%) translateY(-10px);
+.smt-tooltip.smt-pinned {
+  border: 2px solid var(--md-accent);
+  box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.2), var(--md-elevation-3);
 }
 
 .smt-tooltip-content {
-  padding: 14px 16px;
+  padding: 16px;
+  cursor: move;
 }
 
 .smt-original {
-  font-size: 12px;
-  color: #6B7280;
-  margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #E5E7EB;
+  font-size: 13px;
+  color: var(--md-on-surface-medium);
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--md-divider);
   word-break: break-word;
 }
 
 .smt-translated {
   font-size: 15px;
-  color: #111827;
+  color: var(--md-on-surface);
   font-weight: 500;
   word-break: break-word;
 }
 
 .smt-alternatives {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed #E5E7EB;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--md-divider);
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -110,147 +165,115 @@
 
 .smt-alt {
   font-size: 12px;
-  color: #6B7280;
-  background: #F3F4F6;
-  padding: 3px 8px;
-  border-radius: 4px;
+  color: var(--md-on-surface-medium);
+  background: var(--md-background);
+  padding: 4px 10px;
+  border-radius: 16px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s;
 }
 
 .smt-alt:hover {
-  background: #E5E7EB;
-  color: #374151;
+  background: var(--md-primary-light);
+  color: var(--md-primary);
 }
 
 /* Tooltip Actions */
 .smt-tooltip-actions {
   display: flex;
-  gap: 2px;
-  padding: 8px 12px;
-  background: #F9FAFB;
-  border-top: 1px solid #E5E7EB;
+  gap: 4px;
+  padding: 10px 12px;
+  background: var(--md-background);
+  border-top: 1px solid var(--md-divider);
 }
 
 .smt-action {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
-  color: #6B7280;
+  transition: all 0.2s;
+  color: var(--md-on-surface-medium);
 }
 
 .smt-action:hover {
-  background: #E5E7EB;
-  color: #374151;
+  background: var(--md-primary-light);
+  color: var(--md-primary);
 }
 
 .smt-action:active {
-  transform: scale(0.92);
+  transform: scale(0.9);
 }
 
 .smt-action svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   fill: currentColor;
+}
+
+.smt-tooltip.smt-pinned .smt-pin {
+  background: var(--md-accent);
+  color: white;
 }
 
 .smt-action.smt-close {
   margin-left: auto;
 }
 
-/* === Progress Overlay === */
-.smt-progress {
+/* === Original Tooltip (Hover) === */
+.smt-original-tooltip {
   position: fixed;
-  top: 20px;
-  right: 20px;
   z-index: 2147483647;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-  padding: 16px 20px;
-  min-width: 280px;
-  opacity: 0;
-  transform: translateX(20px);
-  transition: all 0.3s ease-out;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.smt-progress.smt-visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.smt-progress-bar {
-  height: 6px;
-  background: #E5E7EB;
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
-.smt-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4F46E5, #7C3AED);
-  border-radius: 3px;
-  width: 0%;
-  transition: width 0.3s ease-out;
-}
-
-.smt-progress-text {
+  background: #424242;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
   font-size: 13px;
-  color: #374151;
-  font-weight: 500;
-}
-
-/* === Notifications === */
-.smt-notification {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-20px);
-  z-index: 2147483647;
-  background: #ffffff;
-  color: #374151;
-  padding: 12px 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-  font-size: 14px;
-  font-weight: 500;
+  max-width: 300px;
+  word-break: break-word;
   opacity: 0;
-  transition: all 0.3s ease-out;
-  max-width: 90vw;
-  text-align: center;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  box-shadow: var(--md-elevation-2);
 }
 
-.smt-notification.smt-visible {
+.smt-original-tooltip.smt-visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
 }
 
-.smt-notification-success {
-  background: #ECFDF5;
-  color: #065F46;
-  border-color: #A7F3D0;
+.smt-original-tooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 20px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #424242;
 }
 
-.smt-notification-error {
-  background: #FEF2F2;
-  color: #991B1B;
-  border-color: #FECACA;
+/* === Translated Text Wrapper === */
+.smt-translated-text {
+  background: linear-gradient(to bottom, rgba(25, 118, 210, 0.08), rgba(25, 118, 210, 0.04));
+  border-radius: 2px;
+  padding: 0 2px;
+  margin: 0 -2px;
+  cursor: help;
+  transition: background 0.2s;
+  border-bottom: 1px dotted var(--md-primary);
 }
 
-.smt-notification-info {
-  background: #EFF6FF;
-  color: #1E40AF;
-  border-color: #BFDBFE;
+.smt-translated-text:hover {
+  background: rgba(25, 118, 210, 0.15);
+}
+
+.smt-translated-text.smt-showing-original {
+  background: rgba(255, 152, 0, 0.1);
+  border-bottom-color: var(--md-warning);
 }
 
 /* === Bilingual Mode === */
@@ -265,106 +288,122 @@
 
 .smt-bilingual-translated {
   display: block;
-  color: #4F46E5;
-  font-style: italic;
+  color: var(--md-primary);
   margin-top: 4px;
   padding-left: 12px;
-  border-left: 3px solid #C7D2FE;
+  border-left: 3px solid var(--md-primary-light);
+  font-style: italic;
   opacity: 0.9;
 }
 
-/* Highlight für übersetzte Elemente */
-.smt-translated-highlight {
-  background: linear-gradient(120deg, #E0E7FF 0%, #EDE9FE 100%);
-  border-radius: 2px;
-  padding: 0 2px;
-  margin: 0 -2px;
+/* === Progress === */
+.smt-progress {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  background: var(--md-surface);
+  border-radius: 8px;
+  box-shadow: var(--md-elevation-3);
+  padding: 16px 20px;
+  min-width: 300px;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* === Dark Mode Support === */
+.smt-progress.smt-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.smt-progress-bar {
+  height: 4px;
+  background: var(--md-divider);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.smt-progress-fill {
+  height: 100%;
+  background: var(--md-primary);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s ease-out;
+}
+
+.smt-progress-text {
+  font-size: 14px;
+  color: var(--md-on-surface);
+  font-weight: 500;
+}
+
+/* === Notifications === */
+.smt-notification {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  z-index: 2147483647;
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+  padding: 14px 24px;
+  border-radius: 8px;
+  box-shadow: var(--md-elevation-3);
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 90vw;
+  text-align: center;
+}
+
+.smt-notification.smt-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.smt-notification-success {
+  background: var(--md-success);
+  color: white;
+}
+
+.smt-notification-error {
+  background: var(--md-error);
+  color: white;
+}
+
+.smt-notification-info {
+  background: var(--md-primary);
+  color: white;
+}
+
+/* === Dark Mode === */
 @media (prefers-color-scheme: dark) {
-  .smt-tooltip {
-    background: #1F2937;
-    border-color: rgba(255, 255, 255, 0.1);
+  :root {
+    --md-surface: #424242;
+    --md-background: #303030;
+    --md-on-surface: #FFFFFF;
+    --md-on-surface-medium: #B0B0B0;
+    --md-divider: #616161;
+    --md-primary-light: #1565C0;
   }
 
-  .smt-original {
-    color: #9CA3AF;
-    border-bottom-color: #374151;
+  .smt-original-tooltip {
+    background: #212121;
   }
 
-  .smt-translated {
-    color: #F9FAFB;
+  .smt-original-tooltip::after {
+    border-top-color: #212121;
   }
 
-  .smt-alternatives {
-    border-top-color: #374151;
+  .smt-translated-text {
+    background: rgba(25, 118, 210, 0.15);
   }
 
-  .smt-alt {
-    background: #374151;
-    color: #D1D5DB;
-  }
-
-  .smt-alt:hover {
-    background: #4B5563;
-    color: #F3F4F6;
-  }
-
-  .smt-tooltip-actions {
-    background: #111827;
-    border-top-color: #374151;
-  }
-
-  .smt-action {
-    color: #9CA3AF;
-  }
-
-  .smt-action:hover {
-    background: #374151;
-    color: #F3F4F6;
-  }
-
-  .smt-progress {
-    background: #1F2937;
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .smt-progress-bar {
-    background: #374151;
-  }
-
-  .smt-progress-text {
-    color: #D1D5DB;
-  }
-
-  .smt-notification {
-    background: #1F2937;
-    color: #F3F4F6;
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .smt-notification-success {
-    background: #064E3B;
-    color: #A7F3D0;
-    border-color: #065F46;
-  }
-
-  .smt-notification-error {
-    background: #7F1D1D;
-    color: #FECACA;
-    border-color: #991B1B;
-  }
-
-  .smt-notification-info {
-    background: #1E3A8A;
-    color: #BFDBFE;
-    border-color: #1E40AF;
-  }
-
-  .smt-bilingual-translated {
-    color: #A5B4FC;
-    border-left-color: #6366F1;
+  .smt-translated-text:hover {
+    background: rgba(25, 118, 210, 0.25);
   }
 }
 
@@ -372,6 +411,13 @@
 @media print {
   .smt-ui {
     display: none !important;
+  }
+
+  .smt-translated-text {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .smt-bilingual-translated {
@@ -382,13 +428,20 @@
 /* === Responsive === */
 @media (max-width: 480px) {
   .smt-tooltip {
-    max-width: calc(100vw - 40px);
-    min-width: 160px;
+    max-width: calc(100vw - 32px);
+    min-width: 180px;
   }
 
   .smt-progress {
-    left: 20px;
-    right: 20px;
+    left: 16px;
+    right: 16px;
     min-width: auto;
+  }
+
+  .smt-cache-indicator {
+    top: 12px;
+    right: 12px;
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }

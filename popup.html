@@ -5,250 +5,368 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Translator</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --md-primary: #1976D2;
+      --md-primary-dark: #1565C0;
+      --md-primary-light: #BBDEFB;
+      --md-accent: #FF5722;
+      --md-success: #4CAF50;
+      --md-success-light: #C8E6C9;
+      --md-error: #F44336;
+      --md-error-light: #FFCDD2;
+      --md-warning: #FF9800;
+      --md-warning-light: #FFE0B2;
+      --md-surface: #FFFFFF;
+      --md-background: #FAFAFA;
+      --md-on-surface: #212121;
+      --md-on-surface-medium: #757575;
+      --md-divider: #E0E0E0;
     }
 
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      width: 320px;
-      background: #F9FAFB;
-      color: #111827;
+      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      width: 380px;
+      background: var(--md-background);
+      color: var(--md-on-surface);
+      font-size: 14px;
     }
 
     .header {
-      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      background: var(--md-primary);
       color: white;
-      padding: 16px;
+      padding: 16px 20px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
-    .header h1 {
-      font-size: 15px;
-      font-weight: 600;
+    .header h1 { font-size: 18px; font-weight: 500; }
+    .header svg { width: 24px; height: 24px; }
+
+    .content { padding: 16px; }
+
+    /* Cache Status */
+    .cache-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--md-warning-light);
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
     }
 
-    .header svg {
-      width: 22px;
-      height: 22px;
+    .cache-status.has-cache {
+      background: var(--md-success-light);
     }
 
-    .content {
-      padding: 16px;
+    .cache-status .info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
     }
 
-    .quick-translate {
+    .cache-status .size {
+      font-weight: 500;
+      color: var(--md-on-surface);
+    }
+
+    .cache-status .hint {
+      font-size: 11px;
+      color: var(--md-on-surface-medium);
+    }
+
+    .cache-status button {
+      padding: 6px 14px;
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .cache-status button:hover {
+      background: var(--md-divider);
+    }
+
+    /* Sprachen */
+    .lang-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       margin-bottom: 16px;
     }
 
-    .input-group {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .input-group select {
+    .lang-row select {
       flex: 1;
-      padding: 8px 10px;
-      border: 1px solid #D1D5DB;
-      border-radius: 6px;
-      font-size: 13px;
-      background: white;
+      padding: 12px;
+      border: 1px solid var(--md-divider);
+      border-radius: 4px;
+      font-size: 14px;
+      background: var(--md-surface);
+      color: var(--md-on-surface);
+      cursor: pointer;
     }
 
-    .input-group select:focus {
+    .lang-row select:focus {
       outline: none;
-      border-color: #4F46E5;
+      border-color: var(--md-primary);
     }
 
+    .swap-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: var(--md-primary-light);
+      color: var(--md-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .swap-btn:hover {
+      background: var(--md-primary);
+      color: white;
+    }
+
+    .swap-btn svg { width: 20px; height: 20px; fill: currentColor; }
+
+    /* Text Input */
     textarea {
       width: 100%;
-      height: 80px;
-      padding: 10px;
-      border: 1px solid #D1D5DB;
-      border-radius: 6px;
-      font-size: 13px;
+      height: 100px;
+      padding: 12px;
+      border: 1px solid var(--md-divider);
+      border-radius: 4px;
+      font-size: 14px;
       resize: none;
-      margin-bottom: 10px;
       font-family: inherit;
+      color: var(--md-on-surface);
+      background: var(--md-surface);
+      margin-bottom: 12px;
     }
 
     textarea:focus {
       outline: none;
-      border-color: #4F46E5;
+      border-color: var(--md-primary);
     }
 
+    textarea::placeholder {
+      color: var(--md-on-surface-medium);
+    }
+
+    /* Buttons */
     .btn {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      background: var(--md-primary);
       color: white;
     }
 
     .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
+      background: var(--md-primary-dark);
     }
 
-    .btn svg {
-      width: 16px;
-      height: 16px;
-      fill: currentColor;
+    .btn-primary:disabled {
+      background: #BDBDBD;
+      cursor: not-allowed;
     }
 
-    .result {
-      background: #EEF2FF;
-      border: 1px solid #C7D2FE;
-      border-radius: 6px;
-      padding: 10px;
-      margin-top: 12px;
-      font-size: 13px;
+    .btn svg { width: 18px; height: 18px; fill: currentColor; }
+
+    /* Result Box */
+    .result-box {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--md-primary-light);
+      border-radius: 8px;
       min-height: 60px;
+      color: var(--md-on-surface);
+      font-size: 14px;
+      line-height: 1.6;
       display: none;
     }
 
-    .result.show {
-      display: block;
+    .result-box.show { display: block; }
+
+    .result-box.error {
+      background: var(--md-error-light);
+      color: var(--md-error);
     }
 
-    .result.error {
-      background: #FEF2F2;
-      border-color: #FECACA;
-      color: #DC2626;
-    }
-
-    .divider {
-      height: 1px;
-      background: #E5E7EB;
-      margin: 16px 0;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .result-actions {
+      display: flex;
       gap: 8px;
+      margin-top: 12px;
     }
 
-    .action-btn {
-      padding: 12px 10px;
-      background: white;
-      border: 1px solid #E5E7EB;
-      border-radius: 8px;
+    .result-action {
+      padding: 8px 14px;
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 4px;
+      font-size: 12px;
       cursor: pointer;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-      border-color: #C7D2FE;
-      background: #F5F3FF;
-    }
-
-    .action-btn svg {
-      width: 20px;
-      height: 20px;
-      fill: #4F46E5;
-      margin-bottom: 4px;
-    }
-
-    .action-btn span {
-      display: block;
-      font-size: 11px;
-      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--md-on-surface-medium);
       font-weight: 500;
     }
 
+    .result-action:hover {
+      background: var(--md-primary-light);
+      border-color: var(--md-primary);
+      color: var(--md-primary);
+    }
+
+    .result-action svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .divider {
+      height: 1px;
+      background: var(--md-divider);
+      margin: 16px 0;
+    }
+
+    /* Actions Grid */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .action-card {
+      padding: 14px 8px;
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .action-card:hover {
+      border-color: var(--md-primary);
+      background: var(--md-primary-light);
+    }
+
+    .action-card svg {
+      width: 24px;
+      height: 24px;
+      fill: var(--md-primary);
+      margin-bottom: 6px;
+    }
+
+    .action-card span {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--md-on-surface);
+      line-height: 1.3;
+    }
+
+    /* Shortcuts */
     .shortcuts {
-      background: #F3F4F6;
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin-top: 12px;
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 16px;
     }
 
     .shortcuts h3 {
       font-size: 11px;
-      color: #6B7280;
-      margin-bottom: 8px;
+      font-weight: 500;
+      color: var(--md-on-surface-medium);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      margin-bottom: 10px;
     }
 
-    .shortcut {
+    .shortcut-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
       font-size: 12px;
-      margin-bottom: 4px;
+      color: var(--md-on-surface-medium);
     }
 
-    .shortcut:last-child {
-      margin-bottom: 0;
-    }
-
-    .shortcut kbd {
-      background: white;
-      padding: 2px 6px;
+    .shortcut-row kbd {
+      background: var(--md-background);
+      padding: 3px 8px;
       border-radius: 4px;
       font-family: monospace;
       font-size: 11px;
-      border: 1px solid #D1D5DB;
+      border: 1px solid var(--md-divider);
     }
 
     .footer {
       padding: 12px 16px;
-      background: white;
-      border-top: 1px solid #E5E7EB;
+      background: var(--md-surface);
+      border-top: 1px solid var(--md-divider);
       text-align: center;
     }
 
     .footer a {
-      color: #4F46E5;
+      color: var(--md-primary);
       text-decoration: none;
-      font-size: 12px;
-    }
-
-    .footer a:hover {
-      text-decoration: underline;
+      font-size: 13px;
+      font-weight: 500;
     }
 
     .spinner {
-      width: 14px;
-      height: 14px;
+      width: 18px;
+      height: 18px;
       border: 2px solid rgba(255,255,255,0.3);
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     @media (prefers-color-scheme: dark) {
-      body { background: #111827; color: #F9FAFB; }
-      .input-group select, textarea { background: #1F2937; border-color: #374151; color: #F9FAFB; }
-      .action-btn { background: #1F2937; border-color: #374151; }
-      .action-btn:hover { background: #374151; }
-      .action-btn span { color: #D1D5DB; }
-      .shortcuts { background: #1F2937; }
-      .footer { background: #1F2937; border-color: #374151; }
-      .result { background: #1E3A5F; border-color: #2563EB; }
+      :root {
+        --md-surface: #424242;
+        --md-background: #303030;
+        --md-on-surface: #FFFFFF;
+        --md-on-surface-medium: #B0B0B0;
+        --md-divider: #616161;
+        --md-primary-light: #1565C0;
+      }
+
+      textarea, .lang-row select {
+        background: #505050;
+        border-color: #616161;
+        color: white;
+      }
+
+      .shortcut-row kbd {
+        background: #505050;
+        color: white;
+      }
     }
   </style>
 </head>
@@ -261,62 +379,102 @@
   </div>
 
   <div class="content">
-    <div class="quick-translate">
-      <div class="input-group">
-        <select id="sourceLang">
-          <option value="auto">Auto</option>
-          <option value="en">EN</option>
-          <option value="de">DE</option>
-          <option value="fr">FR</option>
-          <option value="es">ES</option>
-        </select>
-        <select id="targetLang">
-          <option value="de">DE</option>
-          <option value="en">EN</option>
-          <option value="fr">FR</option>
-          <option value="es">ES</option>
-        </select>
+    <div class="cache-status" id="cacheStatus" style="display: none;">
+      <div class="info">
+        <span class="size" id="cacheSize">0 KB</span>
+        <span class="hint" id="cacheHint">Diese Seite hat Cache</span>
       </div>
-      <textarea id="inputText" placeholder="Text eingeben..."></textarea>
-      <button class="btn btn-primary" id="translateBtn">
-        <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
-        Übersetzen
+      <button id="loadCacheBtn">Laden</button>
+    </div>
+
+    <div class="lang-row">
+      <select id="sourceLang">
+        <option value="auto">Automatisch</option>
+        <option value="en">Englisch</option>
+        <option value="de">Deutsch</option>
+        <option value="fr">Französisch</option>
+        <option value="es">Spanisch</option>
+        <option value="it">Italienisch</option>
+        <option value="pt">Portugiesisch</option>
+        <option value="ru">Russisch</option>
+        <option value="zh">Chinesisch</option>
+        <option value="ja">Japanisch</option>
+      </select>
+      <button class="swap-btn" id="swapLangs" title="Sprachen tauschen">
+        <svg viewBox="0 0 24 24"><path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z"/></svg>
       </button>
-      <div class="result" id="result"></div>
+      <select id="targetLang">
+        <option value="de">Deutsch</option>
+        <option value="en">Englisch</option>
+        <option value="fr">Französisch</option>
+        <option value="es">Spanisch</option>
+        <option value="it">Italienisch</option>
+        <option value="pt">Portugiesisch</option>
+        <option value="ru">Russisch</option>
+        <option value="zh">Chinesisch</option>
+        <option value="ja">Japanisch</option>
+      </select>
+    </div>
+
+    <textarea id="inputText" placeholder="Text zum Übersetzen eingeben..."></textarea>
+
+    <button class="btn btn-primary" id="translateBtn">
+      <svg viewBox="0 0 24 24"><path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+      Übersetzen
+    </button>
+
+    <div class="result-box" id="resultBox"></div>
+    <div class="result-actions" id="resultActions" style="display: none;">
+      <button class="result-action" id="copyResult">
+        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+        Kopieren
+      </button>
+      <button class="result-action" id="speakResult">
+        <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+        Vorlesen
+      </button>
     </div>
 
     <div class="divider"></div>
 
-    <div class="actions">
-      <div class="action-btn" id="translatePage">
+    <div class="actions-grid">
+      <div class="action-card" id="translatePage">
         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-        <span>Seite übersetzen</span>
+        <span>Seite</span>
       </div>
-      <div class="action-btn" id="bilingualPage">
+      <div class="action-card" id="bilingualPage">
         <svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z"/></svg>
         <span>Bilingual</span>
       </div>
-      <div class="action-btn" id="openSidepanel">
-        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M15 7h2v10h-2z"/></svg>
-        <span>Side Panel</span>
-      </div>
-      <div class="action-btn" id="restorePage">
+      <div class="action-card" id="toggleTranslation">
         <svg viewBox="0 0 24 24"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
-        <span>Wiederherstellen</span>
+        <span>Toggle</span>
+      </div>
+      <div class="action-card" id="restorePage">
+        <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+        <span>Original</span>
+      </div>
+      <div class="action-card" id="exportPdf">
+        <svg viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
+        <span>PDF</span>
+      </div>
+      <div class="action-card" id="openSidepanel">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M15 7h2v10h-2z"/></svg>
+        <span>Panel</span>
       </div>
     </div>
 
     <div class="shortcuts">
       <h3>Tastenkürzel</h3>
-      <div class="shortcut">
+      <div class="shortcut-row">
         <span>Auswahl übersetzen</span>
         <kbd>Ctrl+Shift+T</kbd>
       </div>
-      <div class="shortcut">
+      <div class="shortcut-row">
         <span>Seite übersetzen</span>
         <kbd>Ctrl+Shift+P</kbd>
       </div>
-      <div class="shortcut">
+      <div class="shortcut-row">
         <span>Side Panel</span>
         <kbd>Ctrl+Shift+S</kbd>
       </div>
@@ -325,6 +483,8 @@
 
   <div class="footer">
     <a href="#" id="openOptions">⚙️ Einstellungen</a>
+    &nbsp;·&nbsp;
+    <a href="#" id="manageCache">📦 Cache verwalten</a>
   </div>
 
   <script src="popup.js"></script>

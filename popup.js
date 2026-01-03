@@ -1,16 +1,52 @@
-// Popup JavaScript - Smart Web Translator v2.0
+// Popup JavaScript - Smart Web Translator v2.1
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Einstellungen laden
+  await loadSettings();
+  await checkPageCache();
+  setupEventListeners();
+});
+
+async function loadSettings() {
   const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
   document.getElementById('sourceLang').value = settings.sourceLang || 'auto';
   document.getElementById('targetLang').value = settings.targetLang || 'de';
+}
 
-  // Quick Translate
+async function checkPageCache() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) return;
+
+    const response = await chrome.tabs.sendMessage(tab.id, { action: 'getCacheInfo' });
+
+    if (response && response.currentPageHasCache) {
+      const cacheStatus = document.getElementById('cacheStatus');
+      const cacheSize = document.getElementById('cacheSize');
+      const cacheHint = document.getElementById('cacheHint');
+
+      cacheStatus.style.display = 'flex';
+      cacheStatus.classList.add('has-cache');
+      cacheSize.textContent = formatBytes(response.size);
+      cacheHint.textContent = `${response.entries.length} Seite(n) gecacht`;
+    }
+  } catch (e) {
+    // Content script nicht geladen
+  }
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function setupEventListeners() {
   const translateBtn = document.getElementById('translateBtn');
   const inputText = document.getElementById('inputText');
-  const result = document.getElementById('result');
+  const resultBox = document.getElementById('resultBox');
+  const resultActions = document.getElementById('resultActions');
 
+  // Quick Translate
   translateBtn.addEventListener('click', async () => {
     const text = inputText.value.trim();
     if (!text) return;
@@ -29,13 +65,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         target: targetLang
       });
 
-      result.classList.add('show');
-      result.classList.remove('error');
+      resultBox.classList.add('show');
+      resultBox.classList.remove('error');
 
       if (response.success) {
-        result.textContent = response.translatedText;
+        resultBox.textContent = response.translatedText;
+        resultActions.style.display = 'flex';
 
-        // Zum Verlauf hinzufügen
         await chrome.runtime.sendMessage({
           action: 'addToHistory',
           entry: {
@@ -47,12 +83,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         });
       } else {
-        result.textContent = 'Fehler: ' + (response.error || 'Unbekannt');
-        result.classList.add('error');
+        resultBox.textContent = 'Fehler: ' + (response.error || 'Unbekannt');
+        resultBox.classList.add('error');
       }
     } catch (error) {
-      result.classList.add('show', 'error');
-      result.textContent = 'Verbindungsfehler';
+      resultBox.classList.add('show', 'error');
+      resultBox.textContent = 'Verbindungsfehler: ' + error.message;
     }
 
     translateBtn.disabled = false;
@@ -74,43 +110,117 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('sourceLang').addEventListener('change', saveLanguages);
   document.getElementById('targetLang').addEventListener('change', saveLanguages);
 
-  async function saveLanguages() {
-    const sourceLang = document.getElementById('sourceLang').value;
-    const targetLang = document.getElementById('targetLang').value;
-    await chrome.storage.sync.set({ sourceLang, targetLang });
-  }
+  // Sprachen tauschen
+  document.getElementById('swapLangs').addEventListener('click', () => {
+    const source = document.getElementById('sourceLang');
+    const target = document.getElementById('targetLang');
+    if (source.value !== 'auto') {
+      const temp = source.value;
+      source.value = target.value;
+      target.value = temp;
+      saveLanguages();
+    }
+  });
 
-  // Seite übersetzen
+  // Kopieren
+  document.getElementById('copyResult').addEventListener('click', () => {
+    navigator.clipboard.writeText(resultBox.textContent);
+    showToast('Kopiert!');
+  });
+
+  // Vorlesen
+  document.getElementById('speakResult').addEventListener('click', () => {
+    const targetLang = document.getElementById('targetLang').value;
+    const utterance = new SpeechSynthesisUtterance(resultBox.textContent);
+    utterance.lang = getLangCode(targetLang);
+    speechSynthesis.speak(utterance);
+  });
+
+  // Cache laden
+  document.getElementById('loadCacheBtn')?.addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id, { action: 'loadCachedTranslation' });
+    window.close();
+  });
+
+  // Page Actions
   document.getElementById('translatePage').addEventListener('click', async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await chrome.tabs.sendMessage(tab.id, { action: 'translatePage', mode: 'replace' });
     window.close();
   });
 
-  // Bilingual
   document.getElementById('bilingualPage').addEventListener('click', async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await chrome.tabs.sendMessage(tab.id, { action: 'translatePage', mode: 'bilingual' });
     window.close();
   });
 
-  // Side Panel öffnen
-  document.getElementById('openSidepanel').addEventListener('click', async () => {
+  document.getElementById('toggleTranslation').addEventListener('click', async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await chrome.sidePanel.open({ tabId: tab.id });
+    await chrome.tabs.sendMessage(tab.id, { action: 'toggleTranslation' });
     window.close();
   });
 
-  // Wiederherstellen
   document.getElementById('restorePage').addEventListener('click', async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     await chrome.tabs.sendMessage(tab.id, { action: 'restorePage' });
     window.close();
   });
 
-  // Einstellungen öffnen
+  document.getElementById('exportPdf').addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.tabs.sendMessage(tab.id, { action: 'exportPdf' });
+    window.close();
+  });
+
+  document.getElementById('openSidepanel').addEventListener('click', async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.sidePanel.open({ tabId: tab.id });
+    window.close();
+  });
+
+  // Footer Links
   document.getElementById('openOptions').addEventListener('click', (e) => {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
   });
-});
+
+  document.getElementById('manageCache').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    await chrome.sidePanel.open({ tabId: tab.id });
+    // Signal zum Side Panel, Cache-Tab zu öffnen
+    setTimeout(() => {
+      chrome.runtime.sendMessage({ action: 'sidepanel-show-cache' });
+    }, 300);
+    window.close();
+  });
+}
+
+async function saveLanguages() {
+  const sourceLang = document.getElementById('sourceLang').value;
+  const targetLang = document.getElementById('targetLang').value;
+  await chrome.storage.sync.set({ sourceLang, targetLang });
+}
+
+function getLangCode(lang) {
+  const codes = {
+    'de': 'de-DE', 'en': 'en-US', 'fr': 'fr-FR', 'es': 'es-ES',
+    'it': 'it-IT', 'pt': 'pt-PT', 'ru': 'ru-RU', 'zh': 'zh-CN',
+    'ja': 'ja-JP'
+  };
+  return codes[lang] || 'en-US';
+}
+
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #323232; color: white; padding: 12px 24px; border-radius: 4px;
+    font-size: 14px; z-index: 1000;
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}

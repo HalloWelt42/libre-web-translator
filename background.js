@@ -94,6 +94,13 @@ class TranslatorBackground {
       });
 
       chrome.contextMenus.create({
+        id: 'export-docx',
+        parentId: 'export-menu',
+        title: 'Als Word (.doc)',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
         id: 'separator2',
         type: 'separator',
         contexts: ['page']
@@ -150,6 +157,9 @@ class TranslatorBackground {
           break;
         case 'export-text':
           await this.sendToContentScript(tab.id, { action: 'exportText' });
+          break;
+        case 'export-docx':
+          await this.sendToContentScript(tab.id, { action: 'exportDocx' });
           break;
         case 'open-sidepanel':
           await chrome.sidePanel.open({ tabId: tab.id });

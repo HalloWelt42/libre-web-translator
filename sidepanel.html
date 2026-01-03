@@ -6,20 +6,21 @@
   <title>Smart Translator</title>
   <style>
     :root {
-      --md-primary: #1976D2;
-      --md-primary-dark: #1565C0;
-      --md-primary-light: #BBDEFB;
-      --md-accent: #FF5722;
-      --md-success: #4CAF50;
-      --md-success-light: #C8E6C9;
-      --md-error: #F44336;
-      --md-error-light: #FFCDD2;
-      --md-warning: #FF9800;
-      --md-warning-light: #FFE0B2;
+      /* Verbesserte Farben für bessere Kontraste */
+      --md-primary: #1565C0;
+      --md-primary-dark: #0D47A1;
+      --md-primary-light: #E3F2FD;
+      --md-accent: #E64A19;
+      --md-success: #2E7D32;
+      --md-success-light: #E8F5E9;
+      --md-error: #C62828;
+      --md-error-light: #FFEBEE;
+      --md-warning: #EF6C00;
+      --md-warning-light: #FFF3E0;
       --md-surface: #FFFFFF;
-      --md-background: #FAFAFA;
+      --md-background: #F5F5F5;
       --md-on-surface: #212121;
-      --md-on-surface-medium: #757575;
+      --md-on-surface-medium: #616161;
       --md-divider: #E0E0E0;
     }
 
@@ -563,20 +564,27 @@
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --md-surface: #424242;
-        --md-background: #303030;
+        --md-surface: #2D2D2D;
+        --md-background: #1E1E1E;
         --md-on-surface: #FFFFFF;
-        --md-on-surface-medium: #B0B0B0;
-        --md-divider: #616161;
+        --md-on-surface-medium: #BDBDBD;
+        --md-divider: #404040;
+        --md-primary: #64B5F6;
         --md-primary-light: #1565C0;
-        --md-success-light: #2E7D32;
-        --md-error-light: #C62828;
+        --md-success: #81C784;
+        --md-success-light: #1B5E20;
+        --md-error: #EF5350;
+        --md-error-light: #B71C1C;
+      }
+
+      body {
+        background: var(--md-background);
       }
 
       textarea, select { 
-        background: #505050; 
-        border-color: #616161; 
-        color: white; 
+        background: #383838; 
+        border-color: #505050; 
+        color: #FFFFFF; 
       }
 
       .result-box {
@@ -585,15 +593,70 @@
       }
 
       .cache-stat {
-        background: #505050;
+        background: #383838;
+        border-color: #505050;
+      }
+
+      .cache-stat .value {
+        color: var(--md-primary);
       }
 
       .history-item {
-        background: #505050;
+        background: #383838;
+        border-color: #505050;
+      }
+
+      .history-item:hover {
+        border-color: var(--md-primary);
       }
 
       .cache-item {
-        background: #505050;
+        background: #383838;
+        border-color: #505050;
+      }
+
+      .action-card {
+        background: #383838;
+        border-color: #505050;
+      }
+
+      .action-card:hover {
+        background: #454545;
+        border-color: var(--md-primary);
+      }
+
+      .action-card span {
+        color: #E0E0E0;
+      }
+
+      .tabs {
+        background: #2D2D2D;
+        border-bottom-color: #404040;
+      }
+
+      .tab {
+        color: #BDBDBD;
+      }
+
+      .tab.active {
+        color: var(--md-primary);
+        border-bottom-color: var(--md-primary);
+      }
+
+      .clear-btn {
+        background: #B71C1C;
+        color: #FFFFFF;
+      }
+
+      .btn {
+        background: var(--md-primary);
+        color: #212121;
+      }
+
+      .btn-outline {
+        background: transparent;
+        color: var(--md-primary);
+        border-color: var(--md-primary);
       }
     }
   </style>

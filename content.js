@@ -287,6 +287,13 @@ class SmartTranslator {
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
 
+    // WICHTIG: Text und Position JETZT speichern, bevor die Selection verloren geht
+    const selectedText = selection.toString().trim();
+    const savedPosition = {
+      top: rect.bottom + window.scrollY + 10,
+      left: rect.left + (rect.width / 2)
+    };
+
     this.selectionIcon = document.createElement('div');
     this.selectionIcon.className = 'smt-ui smt-selection-icon';
     this.selectionIcon.innerHTML = `
@@ -308,9 +315,9 @@ class SmartTranslator {
     this.selectionIcon.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const text = window.getSelection().toString().trim();
-      if (text) {
-        this.translateSelection(text);
+      // Verwende die GESPEICHERTEN Werte, nicht die aktuelle Selection
+      if (selectedText) {
+        this.translateSelection(selectedText, savedPosition);
       }
       this.hideSelectionIcon();
     });
@@ -327,7 +334,7 @@ class SmartTranslator {
   }
 
   // === Tooltip mit Pin-Funktion ===
-  showTooltip(original, translated, alternatives = [], isPinned = false) {
+  showTooltip(original, translated, alternatives = [], isPinned = false, savedPosition = null) {
     // Vorherigen nicht-gepinnten Tooltip entfernen
     if (this.tooltip && !this.tooltip.classList.contains('smt-pinned')) {
       this.tooltip.remove();
@@ -376,18 +383,26 @@ class SmartTranslator {
 
     tooltip.innerHTML = content;
 
-    // Position
-    const selection = window.getSelection();
+    // Position - verwende übergebene Position oder berechne aus Selection
     let top, left;
 
-    if (selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      top = rect.bottom + window.scrollY + 10;
-      left = rect.left + (rect.width / 2);
+    if (savedPosition) {
+      // Verwende die gespeicherte Position
+      top = savedPosition.top;
+      left = savedPosition.left;
     } else {
-      top = window.innerHeight / 2 + window.scrollY;
-      left = window.innerWidth / 2;
+      // Fallback: versuche aktuelle Selection zu verwenden
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0 && selection.toString().trim().length > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        top = rect.bottom + window.scrollY + 10;
+        left = rect.left + (rect.width / 2);
+      } else {
+        // Letzter Fallback: Mitte des Bildschirms
+        top = window.innerHeight / 3 + window.scrollY;
+        left = window.innerWidth / 2;
+      }
     }
 
     tooltip.style.cssText = `position: absolute; left: ${left}px; top: ${top}px; transform: translateX(-50%);`;
@@ -500,7 +515,7 @@ class SmartTranslator {
   }
 
   // === Übersetzungsfunktionen ===
-  async translateSelection(text) {
+  async translateSelection(text, position = null) {
     if (!text || text.trim().length === 0) return;
 
     try {
@@ -512,7 +527,7 @@ class SmartTranslator {
       });
 
       if (result.success) {
-        this.showTooltip(text.trim(), result.translatedText, result.alternatives);
+        this.showTooltip(text.trim(), result.translatedText, result.alternatives, false, position);
       } else {
         this.showNotification(result.error || 'Übersetzungsfehler', 'error');
       }

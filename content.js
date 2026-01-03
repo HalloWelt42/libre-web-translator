@@ -1033,6 +1033,85 @@ class SmartTranslator {
     this.showNotification('Text exportiert', 'success');
   }
 
+  // Export als DOCX (HTML-basiert, Word-kompatibel)
+  exportAsDocx() {
+    const data = this.extractSimplifiedContent(document.body);
+    
+    // Word-kompatibles HTML mit XML-Header
+    let html = `
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+  <meta charset="utf-8">
+  <title>${this.escapeHtml(data.title)}</title>
+  <!--[if gte mso 9]>
+  <xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+    </w:WordDocument>
+  </xml>
+  <![endif]-->
+  <style>
+    body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 2.5cm; }
+    h1 { font-size: 24pt; font-weight: bold; margin-bottom: 18pt; border-bottom: 1pt solid #333; padding-bottom: 6pt; }
+    h2 { font-size: 18pt; font-weight: bold; margin-top: 24pt; margin-bottom: 12pt; }
+    h3 { font-size: 14pt; font-weight: bold; margin-top: 18pt; margin-bottom: 10pt; }
+    p { margin-bottom: 12pt; text-align: justify; }
+    pre, code { font-family: 'Courier New', monospace; font-size: 10pt; background: #f5f5f5; padding: 8pt; border: 1pt solid #ddd; }
+    pre { display: block; white-space: pre-wrap; margin: 12pt 0; }
+    blockquote { border-left: 3pt solid #ccc; padding-left: 12pt; margin: 12pt 0; font-style: italic; color: #555; }
+    ul, ol { margin-bottom: 12pt; padding-left: 24pt; }
+    li { margin-bottom: 6pt; }
+    img { max-width: 100%; }
+  </style>
+</head>
+<body>
+  <h1>${this.escapeHtml(data.title)}</h1>
+`;
+
+    data.content.forEach(item => {
+      switch (item.type) {
+        case 'heading':
+          html += `<h${item.level}>${this.escapeHtml(item.text)}</h${item.level}>\n`;
+          break;
+        case 'paragraph':
+          html += `<p>${this.escapeHtml(item.text)}</p>\n`;
+          break;
+        case 'list':
+          const tag = item.ordered ? 'ol' : 'ul';
+          html += `<${tag}>\n${item.items.map(li => `  <li>${this.escapeHtml(li)}</li>`).join('\n')}\n</${tag}>\n`;
+          break;
+        case 'code':
+          html += `<pre><code>${this.escapeHtml(item.text)}</code></pre>\n`;
+          break;
+        case 'quote':
+          html += `<blockquote>${this.escapeHtml(item.text)}</blockquote>\n`;
+          break;
+        case 'image':
+          html += `<p><img src="${item.src}" alt="${this.escapeHtml(item.alt)}"></p>\n`;
+          break;
+      }
+    });
+
+    html += '</body></html>';
+
+    // Als .doc speichern (Word öffnet HTML mit .doc Endung)
+    const blob = new Blob([html], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'translation.doc';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    this.showNotification('Word-Dokument exportiert', 'success');
+  }
+
   // Vereinfachter PDF-Export
   async exportAsPdf(simplified = false) {
     if (simplified && this.settings.simplifyPdfExport) {
@@ -1245,6 +1324,11 @@ class SmartTranslator {
 
       case 'exportText':
         this.exportAsText(request.bilingual);
+        sendResponse({ success: true });
+        break;
+
+      case 'exportDocx':
+        this.exportAsDocx();
         sendResponse({ success: true });
         break;
 

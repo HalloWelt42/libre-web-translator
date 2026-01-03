@@ -357,9 +357,10 @@ class TranslatorBackground {
       skipBlockquotes: true,
       highlightTranslated: true,
       bilingualPosition: 'below',
-      useTabsForAlternatives: false,
+      useTabsForAlternatives: true,
       simplifyPdfExport: false,
-      fixInlineSpacing: true
+      fixInlineSpacing: true,
+      tabWordThreshold: 20
     };
     await chrome.storage.sync.set(defaults);
   }

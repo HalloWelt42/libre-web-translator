@@ -125,20 +125,21 @@
   fill: white;
 }
 
-/* === Tooltip === */
+/* === Tooltip (Kompakt) === */
 .smt-tooltip {
   position: absolute;
   z-index: 2147483647;
   background: var(--md-surface);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: var(--md-elevation-3);
-  max-width: 450px;
-  min-width: 240px;
+  max-width: 380px;
+  min-width: 200px;
   opacity: 0;
   transform: translateX(-50%) translateY(8px);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   border: 1px solid var(--md-divider);
+  font-size: 13px;
 }
 
 .smt-tooltip.smt-visible {
@@ -148,24 +149,24 @@
 
 .smt-tooltip.smt-pinned {
   border: 2px solid var(--md-accent);
-  box-shadow: 0 0 0 4px rgba(255, 87, 34, 0.15), var(--md-elevation-3);
+  box-shadow: 0 0 0 3px rgba(230, 74, 25, 0.15), var(--md-elevation-3);
 }
 
-/* Aktionsleiste OBEN */
+/* Aktionsleiste OBEN (Kompakt) */
 .smt-tooltip-actions {
   display: flex;
-  gap: 6px;
-  padding: 10px 14px;
+  gap: 4px;
+  padding: 6px 10px;
   background: linear-gradient(to bottom, #FAFAFA, #F0F0F0);
   border-bottom: 1px solid var(--md-divider);
 }
 
 .smt-action {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border: 1px solid var(--md-divider);
   background: white;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -188,8 +189,8 @@
 }
 
 .smt-action svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
   fill: currentColor;
 }
 
@@ -208,38 +209,39 @@
   border-color: var(--md-error);
 }
 
-/* Original-Text oben */
+/* Original-Text oben (Kompakt) */
 .smt-tooltip-original {
-  padding: 10px 14px;
-  font-size: 12px;
-  color: #757575;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #616161;
   background: #fafafa;
   border-bottom: 1px solid var(--md-divider);
-  max-height: 60px;
+  max-height: 50px;
   overflow-y: auto;
   word-break: break-word;
+  line-height: 1.4;
 }
 
-/* Tabs für Alternativen */
+/* Tabs für Alternativen (Kompakt) */
 .smt-tooltip-tabs {
   display: flex;
-  gap: 4px;
-  padding: 8px 14px;
+  gap: 3px;
+  padding: 5px 10px;
   background: #f5f5f5;
   border-bottom: 1px solid var(--md-divider);
 }
 
 .smt-tab {
-  min-width: 32px;
-  height: 28px;
-  padding: 0 12px;
+  min-width: 26px;
+  height: 24px;
+  padding: 0 8px;
   border: 1px solid var(--md-divider);
   background: white;
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #757575;
+  color: #616161;
   transition: all 0.15s;
 }
 
@@ -263,42 +265,44 @@
   display: block;
 }
 
-/* Tooltip Content */
+/* Tooltip Content (Kompakt) */
 .smt-tooltip-content {
-  padding: 14px;
+  padding: 10px;
   cursor: move;
 }
 
 .smt-translated {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--md-on-surface);
   font-weight: 500;
   word-break: break-word;
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
 .smt-alternatives {
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px dashed var(--md-divider);
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .smt-alt {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--md-on-surface-medium);
   background: var(--md-background);
-  padding: 4px 10px;
-  border-radius: 16px;
+  padding: 3px 8px;
+  border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  border: 1px solid var(--md-divider);
 }
 
 .smt-alt:hover {
   background: var(--md-primary-light);
   color: var(--md-primary);
+  border-color: var(--md-primary);
 }
 
 /* === Original Tooltip (Hover) === */
@@ -316,6 +320,44 @@
   transition: opacity 0.15s ease;
   pointer-events: none;
   box-shadow: var(--md-elevation-2);
+}
+
+/* === Loading Tooltip mit Spinner === */
+.smt-loading-tooltip {
+  position: absolute;
+  z-index: 2147483647;
+  background: var(--md-surface);
+  border-radius: 8px;
+  box-shadow: var(--md-elevation-2);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+  transition: all 0.2s ease;
+  border: 1px solid var(--md-divider);
+  font-size: 13px;
+  color: var(--md-on-surface-medium);
+}
+
+.smt-loading-tooltip.smt-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.smt-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--md-divider);
+  border-top-color: var(--md-primary);
+  border-radius: 50%;
+  animation: smt-spin 0.8s linear infinite;
+}
+
+@keyframes smt-spin {
+  to { transform: rotate(360deg); }
+}
 }
 
 .smt-original-tooltip.smt-visible {
@@ -570,6 +612,17 @@
   .smt-notification {
     background: #2D2D2D;
     border-color: #404040;
+  }
+
+  .smt-loading-tooltip {
+    background: #2D2D2D;
+    border-color: #404040;
+    color: #BDBDBD;
+  }
+
+  .smt-spinner {
+    border-color: #505050;
+    border-top-color: var(--md-primary);
   }
 }
 

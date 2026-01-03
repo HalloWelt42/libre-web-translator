@@ -13,7 +13,7 @@ async function loadSettings() {
     'tooltipPosition', 'tooltipAutoHideDelay', 'highlightTranslated',
     'bilingualPosition', 'enableTTS', 'ttsLanguage', 'excludedDomains',
     'skipCodeBlocks', 'skipBlockquotes', 'useTabsForAlternatives',
-    'simplifyPdfExport', 'fixInlineSpacing'
+    'simplifyPdfExport', 'fixInlineSpacing', 'tabWordThreshold'
   ]);
 
   // Werte setzen
@@ -36,9 +36,10 @@ async function loadSettings() {
   document.getElementById('excludedDomains').value = settings.excludedDomains || '';
   document.getElementById('skipCodeBlocks').checked = settings.skipCodeBlocks !== false;
   document.getElementById('skipBlockquotes').checked = settings.skipBlockquotes !== false;
-  document.getElementById('useTabsForAlternatives').checked = settings.useTabsForAlternatives || false;
+  document.getElementById('useTabsForAlternatives').checked = settings.useTabsForAlternatives !== false;
   document.getElementById('simplifyPdfExport').checked = settings.simplifyPdfExport || false;
   document.getElementById('fixInlineSpacing').checked = settings.fixInlineSpacing !== false;
+  document.getElementById('tabWordThreshold').value = settings.tabWordThreshold || 20;
 }
 
 function setupEventListeners() {
@@ -75,7 +76,8 @@ async function saveSettings() {
     skipBlockquotes: document.getElementById('skipBlockquotes').checked,
     useTabsForAlternatives: document.getElementById('useTabsForAlternatives').checked,
     simplifyPdfExport: document.getElementById('simplifyPdfExport').checked,
-    fixInlineSpacing: document.getElementById('fixInlineSpacing').checked
+    fixInlineSpacing: document.getElementById('fixInlineSpacing').checked,
+    tabWordThreshold: parseInt(document.getElementById('tabWordThreshold').value) || 20
   };
 
   try {

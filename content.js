@@ -48,7 +48,7 @@ class SmartTranslator {
       'tooltipAutoHide', 'tooltipAutoHideDelay', 'enableDoubleClick',
       'showOriginalInTooltip', 'showAlternatives', 'enableTTS',
       'skipCodeBlocks', 'skipBlockquotes', 'useTabsForAlternatives',
-      'simplifyPdfExport', 'fixInlineSpacing'
+      'simplifyPdfExport', 'fixInlineSpacing', 'tabWordThreshold'
     ]);
 
     this.settings.serviceUrl = this.settings.serviceUrl || 'http://localhost:5000/translate';
@@ -59,9 +59,10 @@ class SmartTranslator {
     this.settings.tooltipAutoHideDelay = this.settings.tooltipAutoHideDelay || 5000;
     this.settings.skipCodeBlocks = this.settings.skipCodeBlocks !== false;
     this.settings.skipBlockquotes = this.settings.skipBlockquotes !== false;
-    this.settings.useTabsForAlternatives = this.settings.useTabsForAlternatives || false;
+    this.settings.useTabsForAlternatives = this.settings.useTabsForAlternatives !== false;
     this.settings.simplifyPdfExport = this.settings.simplifyPdfExport || false;
     this.settings.fixInlineSpacing = this.settings.fixInlineSpacing !== false;
+    this.settings.tabWordThreshold = this.settings.tabWordThreshold || 20;
   }
 
   // === Cache Management ===
@@ -351,7 +352,13 @@ class SmartTranslator {
     tooltip.className = 'smt-ui smt-tooltip' + (isPinned ? ' smt-pinned' : '');
 
     const hasAlternatives = this.settings.showAlternatives && alternatives?.length > 0;
-    const useTabs = hasAlternatives && this.settings.useTabsForAlternatives && original?.length > 50;
+    
+    // Wörter zählen
+    const wordCount = original ? original.trim().split(/\s+/).length : 0;
+    const tabThreshold = this.settings.tabWordThreshold || 20;
+    
+    // Tabs nur bei langen Texten (> threshold Wörter) UND wenn Alternativen vorhanden
+    const useTabs = hasAlternatives && this.settings.useTabsForAlternatives && wordCount > tabThreshold;
 
     // Aktionsleiste OBEN
     let content = `
@@ -568,6 +575,9 @@ class SmartTranslator {
   async translateSelection(text, position = null) {
     if (!text || text.trim().length === 0) return;
 
+    // Zeige Loading-Spinner sofort
+    this.showLoadingTooltip(position);
+
     try {
       const result = await chrome.runtime.sendMessage({
         action: 'translate',
@@ -576,13 +586,59 @@ class SmartTranslator {
         target: this.settings.targetLang
       });
 
+      // Entferne Loading-Tooltip
+      this.hideLoadingTooltip();
+
       if (result.success) {
         this.showTooltip(text.trim(), result.translatedText, result.alternatives, false, position);
       } else {
         this.showNotification(result.error || 'Übersetzungsfehler', 'error');
       }
     } catch (error) {
+      this.hideLoadingTooltip();
       this.showNotification('Verbindungsfehler', 'error');
+    }
+  }
+
+  // Loading-Spinner Tooltip
+  showLoadingTooltip(position) {
+    this.hideLoadingTooltip();
+    
+    const loader = document.createElement('div');
+    loader.className = 'smt-ui smt-loading-tooltip';
+    loader.innerHTML = `
+      <div class="smt-spinner"></div>
+      <span>Übersetze...</span>
+    `;
+
+    let top, left;
+    if (position) {
+      top = position.top;
+      left = position.left;
+    } else {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        top = rect.bottom + window.scrollY + 10;
+        left = rect.left + (rect.width / 2);
+      } else {
+        top = window.innerHeight / 3 + window.scrollY;
+        left = window.innerWidth / 2;
+      }
+    }
+
+    loader.style.cssText = `position: absolute; left: ${left}px; top: ${top}px; transform: translateX(-50%);`;
+    document.body.appendChild(loader);
+    this._loadingTooltip = loader;
+    
+    requestAnimationFrame(() => loader.classList.add('smt-visible'));
+  }
+
+  hideLoadingTooltip() {
+    if (this._loadingTooltip) {
+      this._loadingTooltip.remove();
+      this._loadingTooltip = null;
     }
   }
 
@@ -597,6 +653,11 @@ class SmartTranslator {
     this.translationMode = mode;
 
     try {
+      // Leerzeichen bei Inline-Tags normalisieren BEVOR wir Textknoten sammeln
+      if (this.settings.fixInlineSpacing) {
+        this.normalizeInlineSpacing();
+      }
+
       const textNodes = this.findTranslatableTextNodes();
       const total = textNodes.length;
       let translated = 0;
@@ -843,6 +904,40 @@ class SmartTranslator {
 
   // === Export Funktionen ===
   
+  // Normalisiert Leerzeichen bei Inline-Tag-Wechseln im DOM
+  // Muss VOR findTranslatableTextNodes aufgerufen werden
+  normalizeInlineSpacing() {
+    const inlineTags = ['strong', 'b', 'em', 'i', 'a', 'span', 'mark', 'u', 's', 'sub', 'sup', 'small', 'code', 'abbr', 'cite', 'q'];
+    
+    inlineTags.forEach(tag => {
+      document.querySelectorAll(tag).forEach(el => {
+        // Überspringe unsere eigenen UI-Elemente
+        if (el.closest('.smt-ui')) return;
+        
+        // Prüfe vorherigen Textknoten
+        const prev = el.previousSibling;
+        if (prev && prev.nodeType === Node.TEXT_NODE) {
+          const text = prev.textContent;
+          // Wenn Text nicht mit Leerzeichen/Zeilenumbruch endet UND nicht leer ist
+          if (text.length > 0 && /[^\s]$/.test(text)) {
+            prev.textContent = text + ' ';
+          }
+        }
+        
+        // Prüfe nachfolgenden Textknoten
+        const next = el.nextSibling;
+        if (next && next.nodeType === Node.TEXT_NODE) {
+          const text = next.textContent;
+          // Wenn Text nicht mit Leerzeichen/Zeilenumbruch beginnt UND nicht leer ist
+          // UND nicht mit Satzzeichen beginnt
+          if (text.length > 0 && /^[^\s.,;:!?)\]}"']/.test(text)) {
+            next.textContent = ' ' + text;
+          }
+        }
+      });
+    });
+  }
+
   // Leerzeichen-Fix für Inline-Tags (President<strong>Donald Trump</strong>said -> President Donald Trump said)
   fixInlineTagSpacing(element) {
     if (!element) return '';

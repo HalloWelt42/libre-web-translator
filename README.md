@@ -1,4 +1,4 @@
-# Smart Web Translator v2.1
+# Smart Web Translator v2.2
 
 Browser-Extension zur Übersetzung von Webinhalten mit LibreTranslate-Backend.
 
@@ -16,6 +16,7 @@ Smart Web Translator ist eine Chrome/Brave-Extension, die Texte auf Webseiten ü
 - Lokaler Cache für bereits übersetzte Seiten
 - Anpinnbare Übersetzungs-Tooltips
 - Toggle zwischen Original und Übersetzung
+- Intelligente Code- und Zitat-Erkennung
 
 ---
 
@@ -157,6 +158,19 @@ Erreichbar über Popup → "Einstellungen" oder Rechtsklick auf Extension-Icon.
 | TTS aktivieren | Aus |
 | Sprache | de-DE |
 
+### Inhaltsfilter
+
+| Einstellung | Standard | Beschreibung |
+|-------------|----------|--------------|
+| Code-Blöcke überspringen | An | Übersetzt keine `<code>`, `<pre>`, `<kbd>` Elemente |
+| Zitate überspringen | An | Übersetzt keine `<blockquote>` Elemente |
+
+Die Code-Erkennung erfasst:
+- HTML-Tags: `code`, `pre`, `kbd`, `samp`, `var`
+- CSS-Klassen: `highlight`, `hljs`, `prism`, `codehilite`, `prettyprint`, `language-*`
+- Code-Editoren: Monaco, Ace, CodeMirror
+- Data-Attribute: `data-language`, `data-lang`, `data-code`
+
 ### Ausschlüsse
 
 Liste von Domains, auf denen die Extension nicht aktiv sein soll (eine pro Zeile).
@@ -240,6 +254,15 @@ Response:
 ---
 
 ## Changelog
+
+### v2.2
+
+- Code-Blöcke und Zitate werden standardmäßig nicht übersetzt
+- Intelligente Erkennung von Syntax-Highlighting (Prism, Highlight.js, etc.)
+- Neue Einstellungssektion "Inhaltsfilter"
+- Verbesserte Dark Mode Farben
+- PDF-Export mit besserer Code-Formatierung (Monospace)
+- Print-Styles für Zitate verbessert
 
 ### v2.1
 

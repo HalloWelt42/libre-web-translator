@@ -11,7 +11,8 @@ async function loadSettings() {
     'showSelectionIcon', 'selectionIconDelay', 'enableDoubleClick',
     'showOriginalInTooltip', 'showAlternatives', 'tooltipAutoHide',
     'tooltipPosition', 'tooltipAutoHideDelay', 'highlightTranslated',
-    'bilingualPosition', 'enableTTS', 'ttsLanguage', 'excludedDomains'
+    'bilingualPosition', 'enableTTS', 'ttsLanguage', 'excludedDomains',
+    'skipCodeBlocks', 'skipBlockquotes'
   ]);
 
   // Werte setzen
@@ -32,6 +33,8 @@ async function loadSettings() {
   document.getElementById('enableTTS').checked = settings.enableTTS || false;
   document.getElementById('ttsLanguage').value = settings.ttsLanguage || 'de-DE';
   document.getElementById('excludedDomains').value = settings.excludedDomains || '';
+  document.getElementById('skipCodeBlocks').checked = settings.skipCodeBlocks !== false;
+  document.getElementById('skipBlockquotes').checked = settings.skipBlockquotes !== false;
 }
 
 function setupEventListeners() {
@@ -63,7 +66,9 @@ async function saveSettings() {
     bilingualPosition: document.getElementById('bilingualPosition').value,
     enableTTS: document.getElementById('enableTTS').checked,
     ttsLanguage: document.getElementById('ttsLanguage').value,
-    excludedDomains: document.getElementById('excludedDomains').value.trim()
+    excludedDomains: document.getElementById('excludedDomains').value.trim(),
+    skipCodeBlocks: document.getElementById('skipCodeBlocks').checked,
+    skipBlockquotes: document.getElementById('skipBlockquotes').checked
   };
 
   try {

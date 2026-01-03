@@ -407,7 +407,7 @@
   }
 }
 
-/* === Print === */
+/* === Print / PDF === */
 @media print {
   .smt-ui {
     display: none !important;
@@ -421,7 +421,77 @@
   }
 
   .smt-bilingual-translated {
-    color: #666 !important;
+    color: #444 !important;
+    font-style: italic !important;
+  }
+
+  /* Code-Formatierung für PDF */
+  code, pre, kbd, samp {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+    font-size: 0.9em !important;
+    background: #f5f5f5 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 3px !important;
+  }
+
+  pre {
+    padding: 12px !important;
+    overflow-x: auto !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    page-break-inside: avoid !important;
+  }
+
+  code {
+    padding: 2px 4px !important;
+  }
+
+  pre code {
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /* Zitate */
+  blockquote {
+    border-left: 3px solid #ccc !important;
+    padding-left: 16px !important;
+    margin-left: 0 !important;
+    color: #555 !important;
+    font-style: italic !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Allgemeine Print-Optimierungen */
+  body {
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+  }
+
+  img, table, figure {
+    page-break-inside: avoid !important;
+  }
+
+  a {
+    color: #000 !important;
+    text-decoration: underline !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after {
+    content: "";
   }
 }
 

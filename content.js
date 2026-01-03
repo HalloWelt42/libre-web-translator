@@ -47,7 +47,8 @@ class SmartTranslator {
       'showSelectionIcon', 'selectionIconDelay', 'tooltipPosition',
       'tooltipAutoHide', 'tooltipAutoHideDelay', 'enableDoubleClick',
       'showOriginalInTooltip', 'showAlternatives', 'enableTTS',
-      'skipCodeBlocks', 'skipBlockquotes'
+      'skipCodeBlocks', 'skipBlockquotes', 'useTabsForAlternatives',
+      'simplifyPdfExport', 'fixInlineSpacing'
     ]);
 
     this.settings.serviceUrl = this.settings.serviceUrl || 'http://localhost:5000/translate';
@@ -58,6 +59,9 @@ class SmartTranslator {
     this.settings.tooltipAutoHideDelay = this.settings.tooltipAutoHideDelay || 5000;
     this.settings.skipCodeBlocks = this.settings.skipCodeBlocks !== false;
     this.settings.skipBlockquotes = this.settings.skipBlockquotes !== false;
+    this.settings.useTabsForAlternatives = this.settings.useTabsForAlternatives || false;
+    this.settings.simplifyPdfExport = this.settings.simplifyPdfExport || false;
+    this.settings.fixInlineSpacing = this.settings.fixInlineSpacing !== false;
   }
 
   // === Cache Management ===
@@ -346,26 +350,11 @@ class SmartTranslator {
     const tooltip = document.createElement('div');
     tooltip.className = 'smt-ui smt-tooltip' + (isPinned ? ' smt-pinned' : '');
 
-    let content = `<div class="smt-tooltip-content">`;
+    const hasAlternatives = this.settings.showAlternatives && alternatives?.length > 0;
+    const useTabs = hasAlternatives && this.settings.useTabsForAlternatives && original?.length > 50;
 
-    if (this.settings.showOriginalInTooltip && original) {
-      content += `<div class="smt-original">${this.escapeHtml(original)}</div>`;
-    }
-
-    content += `<div class="smt-translated">${this.escapeHtml(translated)}</div>`;
-
-    if (this.settings.showAlternatives && alternatives?.length > 0) {
-      content += `<div class="smt-alternatives">`;
-      alternatives.slice(0, 3).forEach(alt => {
-        content += `<span class="smt-alt">${this.escapeHtml(alt)}</span>`;
-      });
-      content += `</div>`;
-    }
-
-    content += `</div>`;
-
-    // Aktionsleiste mit Pin
-    content += `
+    // Aktionsleiste OBEN
+    let content = `
       <div class="smt-tooltip-actions">
         <button class="smt-action smt-pin" title="${isPinned ? 'Lösen' : 'Anpinnen'}">
           <svg viewBox="0 0 24 24"><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/></svg>
@@ -384,17 +373,50 @@ class SmartTranslator {
       </div>
     `;
 
+    // Original anzeigen
+    if (this.settings.showOriginalInTooltip && original) {
+      content += `<div class="smt-tooltip-original">${this.escapeHtml(original)}</div>`;
+    }
+
+    // Mit Tabs für Alternativen (bei längeren Texten)
+    if (useTabs) {
+      content += `<div class="smt-tooltip-tabs">`;
+      content += `<button class="smt-tab active" data-index="0">1</button>`;
+      alternatives.slice(0, 3).forEach((_, i) => {
+        content += `<button class="smt-tab" data-index="${i + 1}">${i + 2}</button>`;
+      });
+      content += `</div>`;
+
+      content += `<div class="smt-tooltip-content">`;
+      content += `<div class="smt-tab-panel active" data-index="0">${this.escapeHtml(translated)}</div>`;
+      alternatives.slice(0, 3).forEach((alt, i) => {
+        content += `<div class="smt-tab-panel" data-index="${i + 1}">${this.escapeHtml(alt)}</div>`;
+      });
+      content += `</div>`;
+    } else {
+      // Standard-Layout ohne Tabs
+      content += `<div class="smt-tooltip-content">`;
+      content += `<div class="smt-translated">${this.escapeHtml(translated)}</div>`;
+
+      if (hasAlternatives) {
+        content += `<div class="smt-alternatives">`;
+        alternatives.slice(0, 3).forEach(alt => {
+          content += `<span class="smt-alt">${this.escapeHtml(alt)}</span>`;
+        });
+        content += `</div>`;
+      }
+      content += `</div>`;
+    }
+
     tooltip.innerHTML = content;
 
     // Position - verwende übergebene Position oder berechne aus Selection
     let top, left;
 
     if (savedPosition) {
-      // Verwende die gespeicherte Position
       top = savedPosition.top;
       left = savedPosition.left;
     } else {
-      // Fallback: versuche aktuelle Selection zu verwenden
       const selection = window.getSelection();
       if (selection.rangeCount > 0 && selection.toString().trim().length > 0) {
         const range = selection.getRangeAt(0);
@@ -402,7 +424,6 @@ class SmartTranslator {
         top = rect.bottom + window.scrollY + 10;
         left = rect.left + (rect.width / 2);
       } else {
-        // Letzter Fallback: Mitte des Bildschirms
         top = window.innerHeight / 3 + window.scrollY;
         left = window.innerWidth / 2;
       }
@@ -412,7 +433,28 @@ class SmartTranslator {
 
     document.body.appendChild(tooltip);
 
-    // Event Listener
+    // Tab-Switching
+    if (useTabs) {
+      tooltip.querySelectorAll('.smt-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const index = tab.dataset.index;
+          tooltip.querySelectorAll('.smt-tab').forEach(t => t.classList.remove('active'));
+          tooltip.querySelectorAll('.smt-tab-panel').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          tooltip.querySelector(`.smt-tab-panel[data-index="${index}"]`)?.classList.add('active');
+        });
+      });
+    }
+
+    // Alternative klickbar zum Kopieren
+    tooltip.querySelectorAll('.smt-alt').forEach(alt => {
+      alt.addEventListener('click', () => {
+        navigator.clipboard.writeText(alt.textContent);
+        this.showNotification('Alternative kopiert!', 'success');
+      });
+    });
+
+    // Event Listener für Buttons
     tooltip.querySelector('.smt-pin').addEventListener('click', () => {
       tooltip.classList.toggle('smt-pinned');
       const pinBtn = tooltip.querySelector('.smt-pin');
@@ -425,12 +467,17 @@ class SmartTranslator {
     });
 
     tooltip.querySelector('.smt-copy').addEventListener('click', () => {
-      navigator.clipboard.writeText(translated);
+      // Bei Tabs: aktiven Tab kopieren
+      const activePanel = tooltip.querySelector('.smt-tab-panel.active');
+      const textToCopy = activePanel ? activePanel.textContent : translated;
+      navigator.clipboard.writeText(textToCopy);
       this.showNotification('Kopiert!', 'success');
     });
 
     tooltip.querySelector('.smt-speak')?.addEventListener('click', () => {
-      this.speak(translated);
+      const activePanel = tooltip.querySelector('.smt-tab-panel.active');
+      const textToSpeak = activePanel ? activePanel.textContent : translated;
+      this.speak(textToSpeak);
     });
 
     tooltip.querySelector('.smt-close').addEventListener('click', () => {
@@ -794,14 +841,303 @@ class SmartTranslator {
     return nodes;
   }
 
-  // === PDF Export ===
-  async exportAsPdf() {
-    this.showNotification('PDF wird generiert...', 'info');
+  // === Export Funktionen ===
+  
+  // Leerzeichen-Fix für Inline-Tags (President<strong>Donald Trump</strong>said -> President Donald Trump said)
+  fixInlineTagSpacing(element) {
+    if (!element) return '';
+    
+    const clone = element.cloneNode(true);
+    
+    // Alle Inline-Tags durchgehen
+    const inlineTags = ['strong', 'b', 'em', 'i', 'a', 'span', 'mark', 'u', 's', 'sub', 'sup', 'small'];
+    
+    inlineTags.forEach(tag => {
+      clone.querySelectorAll(tag).forEach(el => {
+        // Prüfe ob vor dem Element ein Zeichen ohne Leerzeichen steht
+        const prev = el.previousSibling;
+        if (prev && prev.nodeType === Node.TEXT_NODE) {
+          const text = prev.textContent;
+          if (text.length > 0 && !/\s$/.test(text)) {
+            prev.textContent = text + ' ';
+          }
+        }
+        
+        // Prüfe ob nach dem Element ein Zeichen ohne Leerzeichen steht
+        const next = el.nextSibling;
+        if (next && next.nodeType === Node.TEXT_NODE) {
+          const text = next.textContent;
+          if (text.length > 0 && !/^\s/.test(text)) {
+            next.textContent = ' ' + text;
+          }
+        }
+      });
+    });
+    
+    return clone.textContent.replace(/\s+/g, ' ').trim();
+  }
 
-    // Kurze Verzögerung damit Notification sichtbar ist
-    await new Promise(r => setTimeout(r, 100));
+  // Vereinfachten Text aus Element extrahieren
+  extractSimplifiedContent(rootElement) {
+    const result = {
+      title: document.title,
+      content: []
+    };
 
-    window.print();
+    // Domain-Strategie verwenden falls verfügbar
+    let mainSelector = 'body';
+    if (window.DomainStrategies) {
+      const strategy = window.DomainStrategies.getStrategy(window.location.href);
+      mainSelector = strategy.getMainContentSelector();
+    }
+
+    const mainContent = document.querySelector(mainSelector) || rootElement;
+    
+    const processNode = (node) => {
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const tag = node.tagName.toLowerCase();
+        
+        // Überspringen
+        if (['script', 'style', 'noscript', 'nav', 'header', 'footer', 'aside', 'svg'].includes(tag)) {
+          return;
+        }
+        if (node.closest('.smt-ui')) return;
+        
+        // Überschriften
+        if (/^h[1-6]$/.test(tag)) {
+          const level = parseInt(tag[1]);
+          const text = this.fixInlineTagSpacing(node);
+          if (text) {
+            result.content.push({ type: 'heading', level, text });
+          }
+          return;
+        }
+        
+        // Absätze
+        if (tag === 'p') {
+          const text = this.fixInlineTagSpacing(node);
+          if (text && text.length > 10) {
+            result.content.push({ type: 'paragraph', text });
+          }
+          return;
+        }
+        
+        // Listen
+        if (tag === 'ul' || tag === 'ol') {
+          const items = Array.from(node.querySelectorAll(':scope > li'))
+            .map(li => this.fixInlineTagSpacing(li))
+            .filter(t => t.length > 0);
+          if (items.length > 0) {
+            result.content.push({ type: 'list', ordered: tag === 'ol', items });
+          }
+          return;
+        }
+        
+        // Code-Blöcke
+        if (tag === 'pre' || (tag === 'code' && node.parentElement?.tagName !== 'PRE')) {
+          result.content.push({ type: 'code', text: node.textContent });
+          return;
+        }
+        
+        // Zitate
+        if (tag === 'blockquote') {
+          result.content.push({ type: 'quote', text: this.fixInlineTagSpacing(node) });
+          return;
+        }
+        
+        // Bilder
+        if (tag === 'img') {
+          result.content.push({ 
+            type: 'image', 
+            src: node.src, 
+            alt: node.alt || '' 
+          });
+          return;
+        }
+        
+        // Rekursiv für Container
+        if (['div', 'section', 'article', 'main'].includes(tag)) {
+          node.childNodes.forEach(child => processNode(child));
+        }
+      }
+    };
+
+    mainContent.childNodes.forEach(child => processNode(child));
+    return result;
+  }
+
+  // Export als Markdown
+  exportAsMarkdown() {
+    const data = this.extractSimplifiedContent(document.body);
+    let md = `# ${data.title}\n\n`;
+    
+    data.content.forEach(item => {
+      switch (item.type) {
+        case 'heading':
+          md += `${'#'.repeat(item.level)} ${item.text}\n\n`;
+          break;
+        case 'paragraph':
+          md += `${item.text}\n\n`;
+          break;
+        case 'list':
+          item.items.forEach((li, i) => {
+            md += item.ordered ? `${i + 1}. ${li}\n` : `- ${li}\n`;
+          });
+          md += '\n';
+          break;
+        case 'code':
+          md += `\`\`\`\n${item.text}\n\`\`\`\n\n`;
+          break;
+        case 'quote':
+          md += `> ${item.text}\n\n`;
+          break;
+        case 'image':
+          md += `![${item.alt}](${item.src})\n\n`;
+          break;
+      }
+    });
+
+    this.downloadFile(md, 'translation.md', 'text/markdown');
+    this.showNotification('Markdown exportiert', 'success');
+  }
+
+  // Export als Text mit Original/Übersetzung
+  exportAsText(bilingual = false) {
+    const data = this.extractSimplifiedContent(document.body);
+    let txt = `${data.title}\n${'='.repeat(data.title.length)}\n\n`;
+    
+    data.content.forEach(item => {
+      switch (item.type) {
+        case 'heading':
+          txt += `\n${item.text}\n${'-'.repeat(item.text.length)}\n\n`;
+          break;
+        case 'paragraph':
+          txt += `${item.text}\n\n`;
+          break;
+        case 'list':
+          item.items.forEach((li, i) => {
+            txt += `  ${item.ordered ? `${i + 1}.` : '•'} ${li}\n`;
+          });
+          txt += '\n';
+          break;
+        case 'code':
+          txt += `---CODE---\n${item.text}\n---/CODE---\n\n`;
+          break;
+        case 'quote':
+          txt += `"${item.text}"\n\n`;
+          break;
+      }
+    });
+
+    this.downloadFile(txt, 'translation.txt', 'text/plain');
+    this.showNotification('Text exportiert', 'success');
+  }
+
+  // Vereinfachter PDF-Export
+  async exportAsPdf(simplified = false) {
+    if (simplified && this.settings.simplifyPdfExport) {
+      // Vereinfachte Version erstellen
+      const data = this.extractSimplifiedContent(document.body);
+      const printWindow = window.open('', '_blank');
+      
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${data.title}</title>
+          <style>
+            body {
+              font-family: Georgia, 'Times New Roman', serif;
+              max-width: 800px;
+              margin: 40px auto;
+              padding: 20px;
+              line-height: 1.8;
+              color: #333;
+            }
+            h1 { font-size: 28px; margin-bottom: 24px; border-bottom: 2px solid #333; padding-bottom: 12px; }
+            h2 { font-size: 22px; margin-top: 32px; }
+            h3 { font-size: 18px; margin-top: 24px; }
+            p { margin-bottom: 16px; text-align: justify; }
+            pre, code {
+              font-family: 'Consolas', 'Monaco', monospace;
+              background: #f5f5f5;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+            }
+            pre { padding: 16px; overflow-x: auto; white-space: pre-wrap; }
+            code { padding: 2px 6px; }
+            blockquote {
+              border-left: 4px solid #ccc;
+              margin: 16px 0;
+              padding: 8px 16px;
+              font-style: italic;
+              color: #555;
+            }
+            ul, ol { margin-bottom: 16px; padding-left: 24px; }
+            li { margin-bottom: 8px; }
+            img { max-width: 100%; height: auto; margin: 16px 0; }
+            @media print {
+              body { margin: 0; }
+              pre { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${this.escapeHtml(data.title)}</h1>
+      `;
+
+      data.content.forEach(item => {
+        switch (item.type) {
+          case 'heading':
+            html += `<h${item.level}>${this.escapeHtml(item.text)}</h${item.level}>`;
+            break;
+          case 'paragraph':
+            html += `<p>${this.escapeHtml(item.text)}</p>`;
+            break;
+          case 'list':
+            const listTag = item.ordered ? 'ol' : 'ul';
+            html += `<${listTag}>${item.items.map(li => `<li>${this.escapeHtml(li)}</li>`).join('')}</${listTag}>`;
+            break;
+          case 'code':
+            html += `<pre><code>${this.escapeHtml(item.text)}</code></pre>`;
+            break;
+          case 'quote':
+            html += `<blockquote>${this.escapeHtml(item.text)}</blockquote>`;
+            break;
+          case 'image':
+            html += `<img src="${item.src}" alt="${this.escapeHtml(item.alt)}">`;
+            break;
+        }
+      });
+
+      html += '</body></html>';
+      
+      printWindow.document.write(html);
+      printWindow.document.close();
+      
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    } else {
+      // Standard: aktuelle Seite drucken
+      this.showNotification('PDF wird generiert...', 'info');
+      await new Promise(r => setTimeout(r, 100));
+      window.print();
+    }
+  }
+
+  // Datei herunterladen
+  downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   // === UI Helfer ===
@@ -898,7 +1234,17 @@ class SmartTranslator {
         break;
 
       case 'exportPdf':
-        this.exportAsPdf();
+        this.exportAsPdf(request.simplified);
+        sendResponse({ success: true });
+        break;
+
+      case 'exportMarkdown':
+        this.exportAsMarkdown();
+        sendResponse({ success: true });
+        break;
+
+      case 'exportText':
+        this.exportAsText(request.bilingual);
         sendResponse({ success: true });
         break;
 
@@ -929,9 +1275,52 @@ class SmartTranslator {
         });
         break;
 
+      case 'translateWordAtCursor':
+        this.translateWordAtPosition(request.x, request.y);
+        sendResponse({ success: true });
+        break;
+
       default:
         sendResponse({ success: false });
     }
+  }
+
+  // Wort an Position übersetzen (für Rechtsklick ohne Markierung)
+  async translateWordAtPosition(x, y) {
+    const element = document.elementFromPoint(x, y);
+    if (!element) return;
+
+    // Finde das Wort an der Position
+    const range = document.caretRangeFromPoint(x, y);
+    if (!range) return;
+
+    const textNode = range.startContainer;
+    if (textNode.nodeType !== Node.TEXT_NODE) return;
+
+    const text = textNode.textContent;
+    const offset = range.startOffset;
+
+    // Wortgrenzen finden
+    let start = offset;
+    let end = offset;
+
+    // Nach links
+    while (start > 0 && /\w/.test(text[start - 1])) start--;
+    // Nach rechts
+    while (end < text.length && /\w/.test(text[end])) end++;
+
+    const word = text.substring(start, end).trim();
+    if (!word || word.length < 2) return;
+
+    // Position für Tooltip
+    const rect = element.getBoundingClientRect();
+    const savedPosition = {
+      top: rect.bottom + window.scrollY + 10,
+      left: x
+    };
+
+    // Übersetzen
+    await this.translateSelection(word, savedPosition);
   }
 }
 

@@ -35,6 +35,12 @@ class TranslatorBackground {
       });
 
       chrome.contextMenus.create({
+        id: 'translate-word',
+        title: '🌐 Wort übersetzen',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
         id: 'translate-page',
         title: '🌐 Seite übersetzen',
         contexts: ['page']
@@ -50,6 +56,47 @@ class TranslatorBackground {
         id: 'separator1',
         type: 'separator',
         contexts: ['page', 'selection']
+      });
+
+      // Export-Untermenü
+      chrome.contextMenus.create({
+        id: 'export-menu',
+        title: '📥 Exportieren',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
+        id: 'export-pdf',
+        parentId: 'export-menu',
+        title: 'Als PDF (Standard)',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
+        id: 'export-pdf-simple',
+        parentId: 'export-menu',
+        title: 'Als PDF (Vereinfacht)',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
+        id: 'export-markdown',
+        parentId: 'export-menu',
+        title: 'Als Markdown',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
+        id: 'export-text',
+        parentId: 'export-menu',
+        title: 'Als Text',
+        contexts: ['page']
+      });
+
+      chrome.contextMenus.create({
+        id: 'separator2',
+        type: 'separator',
+        contexts: ['page']
       });
 
       chrome.contextMenus.create({
@@ -78,11 +125,31 @@ class TranslatorBackground {
         case 'translate-selection':
           await this.translateAndShowResult(info.selectionText, tab);
           break;
+        case 'translate-word':
+          // Wort an Mausposition übersetzen
+          await this.sendToContentScript(tab.id, { 
+            action: 'translateWordAtCursor',
+            x: info.pageX || 0,
+            y: info.pageY || 0
+          });
+          break;
         case 'translate-page':
           await this.sendToContentScript(tab.id, { action: 'translatePage', mode: 'replace' });
           break;
         case 'translate-page-bilingual':
           await this.sendToContentScript(tab.id, { action: 'translatePage', mode: 'bilingual' });
+          break;
+        case 'export-pdf':
+          await this.sendToContentScript(tab.id, { action: 'exportPdf', simplified: false });
+          break;
+        case 'export-pdf-simple':
+          await this.sendToContentScript(tab.id, { action: 'exportPdf', simplified: true });
+          break;
+        case 'export-markdown':
+          await this.sendToContentScript(tab.id, { action: 'exportMarkdown' });
+          break;
+        case 'export-text':
+          await this.sendToContentScript(tab.id, { action: 'exportText' });
           break;
         case 'open-sidepanel':
           await chrome.sidePanel.open({ tabId: tab.id });
@@ -279,7 +346,10 @@ class TranslatorBackground {
       skipCodeBlocks: true,
       skipBlockquotes: true,
       highlightTranslated: true,
-      bilingualPosition: 'below'
+      bilingualPosition: 'below',
+      useTabsForAlternatives: false,
+      simplifyPdfExport: false,
+      fixInlineSpacing: true
     };
     await chrome.storage.sync.set(defaults);
   }

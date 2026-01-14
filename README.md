@@ -1,30 +1,51 @@
-# Smart Web Translator v3.0
+# Smart Web Translator v3.3
 
 Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale LLMs)
 
-## Neue Features in v3.0
+## Neue Features in v3.3
 
-### 🤖 LM Studio Integration
-- **Lokale LLM-Übersetzung** via OpenAI-kompatible API
-- **Dynamische Modell-Auswahl** – zeigt alle in LM Studio geladenen Modelle
-- **Fachkontext-System** mit vordefinierten Prompts:
-  - 🌐 Allgemein
-  - 🚗 Kfz / Automotive
-  - ⚙️ Technisch / IT
-  - 🏥 Medizin
-  - ⚖️ Recht / Juristisch
-  - 📝 Eigener Custom-Prompt
+### 🎨 Dark Mode Fixes
+- **Button-Kontraste verbessert** – Action Cards und Result Actions jetzt besser lesbar
+- **Icons in korrekter Farbe** – Blaue Icons auf dunklem Hintergrund
+- **Text-Kontrast erhöht** – Alle Texte gut sichtbar im Dark Mode
 
-### 📄 Plain-Text & RFC Support
-- **Automatische Erkennung** von .txt Dateien
-- **RFC-Seiten** (ietf.org, rfc-editor.org) werden speziell erkannt
-- **Pre-Only Seiten** werden intelligent verarbeitet
-- Text wird in **logische Absätze** aufgeteilt (anhand von Leerzeilen)
+### 🔔 Toast Notifications (Stack)
+- **Einheitliches Notification-System** – Alle Meldungen erscheinen unten rechts
+- **Toast-Stack** – Mehrere Meldungen stapeln sich
+- **Animations-Verbesserungen** – Slide-In von rechts
 
-### 📊 Einstellbare Parameter
-- **Temperatur-Slider** (0.0–1.0) – niedriger = präziser
-- **Max Tokens** – für längere Übersetzungen
-- **JSON Structured Output** – Alternativen + Kontext-Notizen
+### 🛡️ Cache-Validierung
+- **Falsche Cache-Anzeige behoben** – Nur noch echte Übersetzungen werden angezeigt
+- **Leere Cache-Einträge ignoriert** – Keine irreführenden "Cache vorhanden" Anzeigen mehr
+
+## Features aus v3.1
+
+### 🔄 Cache Auto-Load
+- **Automatisches Laden** gecachter Übersetzungen beim Seitenaufruf
+- Einstellbar in den Optionen (default: aus)
+
+### 🌐 Domain Auto-Translate
+- **Whitelist für Domains** die automatisch übersetzt werden
+- Domain-Verwaltung in den Einstellungen
+
+### 📊 Progress-Ring mit Token-Zähler
+- **Minimierbare Progress-Anzeige** → halbtransparenter Ring
+- **Token-Zähler** pro Anfrage + Gesamt (mit K/M/G Formatierung)
+- **Abbrechen-Button** (optional, einstellbar)
+
+### 🛡️ Erweiterte LLM-Optionen
+- **Embedding-Modelle ausblenden** – zeigt nur Chat-Modelle
+- **Fallback auf LibreTranslate** – automatisch wenn LM Studio nicht erreichbar
+- Alle Optionen default aus, in Einstellungen aktivierbar
+
+### 🗑️ Verbessertes Cache-Management
+- **Einzelne Cache-Einträge löschen** (war vorher nur "Alles löschen")
+- Bessere Übersicht im Sidepanel
+
+### 🧹 Aufgeräumt
+- Doppelklick-Übersetzung entfernt (war fehleranfällig)
+- Auto-Hide-Timer entfernt (manuell schließen ist besser)
+- Einheitliches Material Design Farbschema
 
 ## Installation
 
@@ -35,7 +56,7 @@ Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale 
 
 ## LM Studio Setup
 
-1. **LM Studio starten** und ein Chat-Modell laden (z.B. Qwen3, Llama)
+1. **LM Studio starten** und ein Chat-Modell laden
 2. **Server aktivieren**: Developer → Start Server
 3. In der Erweiterung → Einstellungen:
    - API-Backend: "LM Studio (LLM)" auswählen
@@ -43,7 +64,7 @@ Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale 
    - Modelle laden klicken
    - Gewünschtes Modell auswählen
 
-**Wichtig:** Nur Chat/Instruct-Modelle verwenden, keine Embedding-Modelle!
+**Tipp:** "Embedding-Modelle ausblenden" aktivieren um nur Chat-Modelle zu sehen.
 
 ## Empfohlene Modelle (Mac M4 Max 128GB)
 
@@ -54,35 +75,44 @@ Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale 
 | **Qwen3-14B-Instruct MLX** | ~10GB | Schnell für Echtzeit |
 | **Llama-3.3-70B MLX** | ~45GB | Stark bei EU-Sprachen |
 
-## Dateien
+## Material Design Farben
 
-```
-smart-translator/
-├── manifest.json          # Extension Config
-├── background.js          # Service Worker mit Dual-API
-├── content.js             # Seiten-Manipulation + Plain-Text Support
-├── popup.html/js          # Popup UI
-├── sidepanel.html/js      # Side Panel
-├── options.html/js        # Einstellungen mit API-Auswahl
-├── styles.css             # Content Styles
-├── domain-strategies.js   # Domain-spezifische Regeln
-└── icons/                 # Extension Icons
+```css
+--md-primary:       #1565C0  /* Buttons, Progress, Links */
+--md-primary-dark:  #0D47A1  /* Hover-States */
+--md-primary-light: #E3F2FD  /* Hintergründe, Badges */
+--md-accent:        #E64A19  /* Aktionen */
+--md-success:       #2E7D32  /* Erfolg */
+--md-error:         #C62828  /* Fehler, Löschen */
 ```
 
 ## Changelog
 
+### v3.3
+- ✅ Dark Mode Button-Kontraste (Action Cards, Result Actions)
+- ✅ Toast Notifications unten rechts als Stack
+- ✅ Cache-Validierung – nur echte Übersetzungen anzeigen
+- ✅ smt-action Buttons im Content Script korrigiert
+- ✅ Icon-Farben im Dark Mode
+
+### v3.1
+- ✅ Cache Auto-Load Option
+- ✅ Domain Auto-Translate Whitelist
+- ✅ Progress-Ring (minimierbar, halbtransparent)
+- ✅ Token-Zähler mit K/M/G Formatierung
+- ✅ Abbrechen-Button (optional)
+- ✅ Embedding-Modelle Filter
+- ✅ Fallback auf LibreTranslate
+- ✅ Cache-Einträge einzeln löschen
+- ❌ Doppelklick-Übersetzung entfernt
+- ❌ Auto-Hide-Timer entfernt
+
 ### v3.0
-- ✅ LM Studio API Integration
-- ✅ Fachkontext System-Prompts
-- ✅ Dynamische Modell-Auswahl
-- ✅ Temperatur & Token-Einstellungen
-- ✅ Kontext-Notizen Anzeige
-- ✅ API-Badge in Popup/Sidepanel
-- ✅ Batch-Übersetzung via LLM
-- ✅ **Plain-Text & RFC Support**
+- LM Studio API Integration
+- Fachkontext System-Prompts
+- Plain-Text & RFC Support
 
 ### v2.1
 - LibreTranslate Integration
 - Seitenübersetzung mit Cache
 - PDF/Markdown/DOCX Export
-- Bilingual-Modus

@@ -21,6 +21,7 @@
       --md-background: #F5F5F5;
       --md-on-surface: #212121;
       --md-on-surface-medium: #616161;
+      --md-on-surface-disabled: #9E9E9E;
       --md-divider: #E0E0E0;
     }
 
@@ -82,12 +83,12 @@
 
     .context-notes {
       background: var(--md-warning-light);
-      border: 1px solid #FCD34D;
+      border: 1px solid var(--md-warning);
       border-radius: 8px;
       padding: 10px 14px;
       margin-top: 12px;
       font-size: 13px;
-      color: #92400E;
+      color: var(--md-warning);
       display: none;
     }
 
@@ -195,19 +196,57 @@
     textarea {
       width: 100%;
       min-height: 120px;
+      max-height: 200px;
       padding: 12px;
       border: 1px solid var(--md-divider);
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 14px;
-      resize: vertical;
+      resize: none;
       font-family: inherit;
       color: var(--md-on-surface);
       background: var(--md-surface);
+      overflow-y: auto;
     }
 
     textarea:focus {
       outline: none;
       border-color: var(--md-primary);
+    }
+
+    .result-box {
+      width: 100%;
+      min-height: 120px;
+      max-height: 200px;
+      padding: 12px;
+      border: 1px solid var(--md-divider);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--md-on-surface);
+      background: var(--md-surface);
+      line-height: 1.6;
+      overflow-y: auto;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .result-box:hover {
+      border-color: var(--md-primary);
+      background: var(--md-primary-light);
+    }
+
+    .result-box.error {
+      background: var(--md-error-light);
+      color: var(--md-error);
+      border-color: var(--md-error);
+    }
+
+    .result-box.copied {
+      border-color: var(--md-success);
+      background: var(--md-success-light);
+    }
+
+    .result-box .placeholder {
+      color: var(--md-on-surface-disabled);
     }
 
     .btn {
@@ -217,10 +256,9 @@
       gap: 8px;
       padding: 12px 16px;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 14px;
       font-weight: 500;
-      text-transform: uppercase;
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -235,25 +273,11 @@
     }
 
     .btn-primary:disabled {
-      background: #BDBDBD;
+      background: var(--md-on-surface-disabled);
       cursor: not-allowed;
     }
 
     .btn svg { width: 18px; height: 18px; fill: currentColor; }
-
-    .result-box {
-      padding: 16px;
-      background: var(--md-primary-light);
-      border-radius: 8px;
-      min-height: 80px;
-      color: var(--md-on-surface);
-      line-height: 1.6;
-    }
-
-    .result-box.error {
-      background: var(--md-error-light);
-      color: var(--md-error);
-    }
 
     .result-actions {
       display: flex;
@@ -429,6 +453,126 @@
       padding: 16px;
     }
 
+    /* Token Statistics Card */
+    .token-stats-card {
+      background: linear-gradient(135deg, var(--md-primary-light), #E8F0FE);
+      border: 1px solid var(--md-primary);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .token-stats-card h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--md-primary-dark);
+      margin-bottom: 12px;
+    }
+
+    .token-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .token-stat {
+      background: white;
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .token-value {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--md-primary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .token-label {
+      font-size: 10px;
+      color: var(--md-on-surface-medium);
+      margin-top: 2px;
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+
+    /* Kosten-Anzeige */
+    .cost-display {
+      background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+      border: 1px solid #4CAF50;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+      margin-top: 12px;
+    }
+
+    .cost-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2E7D32;
+    }
+
+    .cost-currency {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .cost-label {
+      font-size: 11px;
+      color: #558B2F;
+      margin-top: 4px;
+    }
+
+    /* Token Reset-Buttons */
+    .token-reset-buttons {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .btn-reset {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 6px 8px;
+      background: white;
+      border: 1px solid var(--md-divider);
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--md-on-surface-medium);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-reset:hover {
+      background: var(--md-error-light);
+      border-color: var(--md-error);
+      color: var(--md-error);
+    }
+
+    .btn-reset-all {
+      background: var(--md-error-light);
+      border-color: var(--md-error);
+      color: var(--md-error);
+    }
+
+    .btn-reset-all:hover {
+      background: var(--md-error);
+      color: white;
+    }
+
     .cache-stats {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -482,7 +626,7 @@
     }
 
     .btn-danger:hover {
-      background: #D32F2F;
+      background: var(--md-error);
     }
 
     .cache-list {
@@ -510,10 +654,17 @@
 
     .cache-item-url {
       font-size: 13px;
-      color: var(--md-on-surface);
+      color: var(--md-primary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      text-decoration: none;
+      display: block;
+    }
+
+    .cache-item-url:hover {
+      text-decoration: underline;
+      color: var(--md-primary-dark);
     }
 
     .cache-item-meta {
@@ -583,25 +734,38 @@
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
+    /* Toast Notifications - Unten Rechts */
     .toast {
       position: fixed;
       bottom: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #323232;
+      right: 16px;
+      background: #1B5E20;
       color: white;
-      padding: 12px 24px;
-      border-radius: 4px;
+      padding: 12px 20px;
+      border-radius: 8px;
       font-size: 14px;
+      font-weight: 500;
       z-index: 1000;
-      animation: fadeInOut 2s ease forwards;
+      animation: toastSlideIn 2s ease forwards;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
 
-    @keyframes fadeInOut {
-      0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
-      15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-      85% { opacity: 1; }
-      100% { opacity: 0; }
+    .toast::before {
+      content: '';
+      width: 4px;
+      height: 100%;
+      position: absolute;
+      left: 0;
+      top: 0;
+      border-radius: 8px 0 0 8px;
+      background: #4CAF50;
+    }
+
+    @keyframes toastSlideIn {
+      0% { opacity: 0; transform: translateX(100%); }
+      15% { opacity: 1; transform: translateX(0); }
+      85% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(100%); }
     }
 
     @media (prefers-color-scheme: dark) {
@@ -610,13 +774,14 @@
         --md-background: #1E1E1E;
         --md-on-surface: #FFFFFF;
         --md-on-surface-medium: #BDBDBD;
+        --md-on-surface-disabled: #757575;
         --md-divider: #404040;
         --md-primary: #64B5F6;
         --md-primary-light: #1565C0;
         --md-success: #81C784;
-        --md-success-light: #1B5E20;
+        --md-success-light: var(--md-success);
         --md-error: #EF5350;
-        --md-error-light: #B71C1C;
+        --md-error-light: var(--md-error);
       }
 
       body {
@@ -624,28 +789,80 @@
       }
 
       textarea, select { 
-        background: #383838; 
-        border-color: #505050; 
-        color: #FFFFFF; 
+        background: var(--md-surface); 
+        border-color: var(--md-divider); 
+        color: var(--md-on-surface); 
       }
 
       .result-box {
-        background: #1565C0;
-        color: #FFFFFF;
+        background: var(--md-surface);
+        border-color: var(--md-divider);
+        color: var(--md-on-surface);
+      }
+
+      .result-box:hover {
+        background: var(--md-primary-light);
+        border-color: var(--md-primary);
       }
 
       .cache-stat {
-        background: #383838;
-        border-color: #505050;
+        background: var(--md-surface);
+        border-color: var(--md-divider);
       }
 
       .cache-stat .value {
         color: var(--md-primary);
       }
 
+      .token-stats-card {
+        background: linear-gradient(135deg, #1E3A5F, #1565C0);
+        border-color: #2196F3;
+      }
+
+      .token-stats-card h3 {
+        color: #90CAF9;
+      }
+
+      .token-stat {
+        background: var(--md-surface);
+      }
+
+      .token-value {
+        color: #90CAF9;
+      }
+
+      .cost-display {
+        background: linear-gradient(135deg, #1B5E20, #2E7D32);
+        border-color: #4CAF50;
+      }
+
+      .cost-value {
+        color: #A5D6A7;
+      }
+
+      .cost-label {
+        color: #81C784;
+      }
+
+      .btn-reset {
+        background: var(--md-surface);
+        border-color: var(--md-divider);
+        color: var(--md-on-surface-medium);
+      }
+
+      .btn-reset:hover {
+        background: #5D3A3A;
+        border-color: var(--md-error);
+        color: var(--md-error);
+      }
+
+      .cache-item-url {
+        color: var(--md-primary) !important;
+      }
+
       .history-item {
-        background: #383838;
-        border-color: #505050;
+        background: var(--md-surface);
+        border-color: var(--md-divider);
       }
 
       .history-item:hover {
@@ -653,31 +870,47 @@
       }
 
       .cache-item {
-        background: #383838;
-        border-color: #505050;
+        background: var(--md-surface);
+        border-color: var(--md-divider);
       }
 
       .action-card {
-        background: #383838;
+        background: #3D3D3D;
         border-color: #505050;
       }
 
       .action-card:hover {
-        background: #454545;
+        background: #4A4A4A;
         border-color: var(--md-primary);
+      }
+
+      .action-card svg {
+        fill: #64B5F6;
       }
 
       .action-card span {
         color: #E0E0E0;
       }
 
+      .result-action {
+        background: #3D3D3D;
+        border-color: #505050;
+        color: #E0E0E0;
+      }
+
+      .result-action:hover {
+        background: #4A4A4A;
+        border-color: var(--md-primary);
+        color: #64B5F6;
+      }
+
       .tabs {
-        background: #2D2D2D;
-        border-bottom-color: #404040;
+        background: var(--md-surface);
+        border-bottom-color: var(--md-divider);
       }
 
       .tab {
-        color: #BDBDBD;
+        color: var(--md-on-surface-medium);
       }
 
       .tab.active {
@@ -686,13 +919,13 @@
       }
 
       .clear-btn {
-        background: #B71C1C;
-        color: #FFFFFF;
+        background: var(--md-error);
+        color: var(--md-primary-text);
       }
 
       .btn {
         background: var(--md-primary);
-        color: #212121;
+        color: var(--md-on-surface);
       }
 
       .btn-outline {
@@ -762,7 +995,7 @@
           Übersetzen
         </button>
 
-        <div class="result-box" id="resultBox">Übersetzung erscheint hier...</div>
+        <div class="result-box" id="resultBox"><span class="placeholder">Übersetzung erscheint hier...</span></div>
         <div class="result-actions" id="resultActions" style="display: none;">
           <button class="result-action" id="copyResult">
             <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
@@ -829,6 +1062,57 @@
     <!-- Cache Tab -->
     <div class="tab-content" id="cache">
       <div class="cache-section">
+        <!-- Token Statistics -->
+        <div class="token-stats-card">
+          <h3>
+            <svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            Token-Statistik
+          </h3>
+          <div class="token-stats-grid">
+            <div class="token-stat">
+              <div class="token-value" id="totalTokens">0</div>
+              <div class="token-label">Gesamt</div>
+            </div>
+            <div class="token-stat">
+              <div class="token-value" id="promptTokens">0</div>
+              <div class="token-label">Prompt</div>
+            </div>
+            <div class="token-stat">
+              <div class="token-value" id="completionTokens">0</div>
+              <div class="token-label">Completion</div>
+            </div>
+            <div class="token-stat">
+              <div class="token-value" id="requestCount">0</div>
+              <div class="token-label">Anfragen</div>
+            </div>
+          </div>
+          
+          <!-- Kosten-Anzeige (wenn aktiviert) -->
+          <div class="cost-display" id="costDisplay" style="display: none;">
+            <div class="cost-value">
+              <span id="totalCost">0,00</span>
+              <span class="cost-currency" id="costCurrency">€</span>
+            </div>
+            <div class="cost-label">Geschätzte Kosten</div>
+          </div>
+          
+          <!-- Reset-Buttons -->
+          <div class="token-reset-buttons">
+            <button class="btn-reset" id="resetTokens" title="Token-Zähler zurücksetzen">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+              Tokens
+            </button>
+            <button class="btn-reset" id="resetCost" title="Kosten zurücksetzen">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+              Kosten
+            </button>
+            <button class="btn-reset btn-reset-all" id="resetAll" title="Alles zurücksetzen">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;fill:currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+              Alles
+            </button>
+          </div>
+        </div>
+
         <div class="cache-stats">
           <div class="cache-stat">
             <div class="value" id="cacheTotalSize">0 KB</div>

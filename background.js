@@ -319,6 +319,21 @@ class TranslatorBackground {
           sendResponse({ success: true, apiType: apiSettings.apiType || 'libretranslate' });
           break;
 
+        case 'getTokenStats':
+          const tokenStats = await this.getTokenStats();
+          sendResponse({ success: true, stats: tokenStats });
+          break;
+
+        case 'updateTokenStats':
+          const updatedStats = await this.updateTokenStats(request.usage);
+          sendResponse({ success: true, stats: updatedStats });
+          break;
+
+        case 'resetTokenStats':
+          await this.resetTokenStats();
+          sendResponse({ success: true });
+          break;
+
         default:
           sendResponse({ success: false, error: 'Unknown action' });
       }
@@ -367,13 +382,24 @@ class TranslatorBackground {
     const settings = await chrome.storage.sync.get([
       'apiType', 'serviceUrl', 'apiKey',
       'lmStudioUrl', 'lmStudioModel', 'lmStudioTemperature',
-      'lmStudioMaxTokens', 'lmStudioContext', 'lmStudioCustomPrompt'
+      'lmStudioMaxTokens', 'lmStudioContext', 'lmStudioCustomPrompt',
+      'enableLLMFallback'
     ]);
 
     const apiType = settings.apiType || 'libretranslate';
 
     if (apiType === 'lmstudio') {
-      return await this.translateWithLMStudio(text, source, target, settings);
+      const result = await this.translateWithLMStudio(text, source, target, settings);
+      
+      // Fallback auf LibreTranslate wenn aktiviert und Fehler
+      if (!result.success && settings.enableLLMFallback) {
+        console.log('LM Studio Fallback zu LibreTranslate...');
+        const fallbackResult = await this.translateWithLibreTranslate(text, source, target, settings);
+        fallbackResult.fallbackUsed = true;
+        return fallbackResult;
+      }
+      
+      return result;
     } else {
       return await this.translateWithLibreTranslate(text, source, target, settings);
     }
@@ -406,7 +432,8 @@ class TranslatorBackground {
         translatedText: result.translatedText || text,
         alternatives: result.alternatives || [],
         detectedLanguage: result.detectedLanguage,
-        apiType: 'libretranslate'
+        apiType: 'libretranslate',
+        tokens: 0 // LibreTranslate hat keine Token-Info
       };
     } catch (e) {
       console.error('LibreTranslate error:', e);
@@ -472,6 +499,16 @@ class TranslatorBackground {
 
       const content = result.choices[0].message.content;
       
+      // Token-Usage extrahieren und persistent speichern
+      const usage = result.usage || {};
+      const tokens = usage.total_tokens || 
+                    (usage.prompt_tokens || 0) + (usage.completion_tokens || 0);
+      
+      // Globale Token-Stats aktualisieren
+      if (usage.total_tokens) {
+        await this.updateTokenStats(usage);
+      }
+      
       try {
         const parsed = JSON.parse(content);
         return {
@@ -479,7 +516,9 @@ class TranslatorBackground {
           translatedText: parsed.translation,
           alternatives: parsed.alternatives || [],
           contextNotes: parsed.context_notes,
-          apiType: 'lmstudio'
+          apiType: 'lmstudio',
+          tokens: tokens,
+          usage: usage
         };
       } catch (parseError) {
         // Fallback: Wenn kein JSON, nutze die rohe Antwort
@@ -487,7 +526,9 @@ class TranslatorBackground {
           success: true,
           translatedText: content.trim(),
           alternatives: [],
-          apiType: 'lmstudio'
+          apiType: 'lmstudio',
+          tokens: tokens,
+          usage: usage
         };
       }
     } catch (e) {
@@ -661,6 +702,68 @@ class TranslatorBackground {
 
   async clearHistory() {
     await chrome.storage.local.set({ translationHistory: [] });
+  }
+
+  // === Token Statistics ===
+  async getTokenStats() {
+    const data = await chrome.storage.local.get(['tokenStats']);
+    return data.tokenStats || {
+      totalTokens: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+      requestCount: 0,
+      lastUpdated: null
+    };
+  }
+
+  async updateTokenStats(usage) {
+    if (!usage) return;
+    
+    const stats = await this.getTokenStats();
+    stats.totalTokens += usage.total_tokens || 0;
+    stats.promptTokens += usage.prompt_tokens || 0;
+    stats.completionTokens += usage.completion_tokens || 0;
+    stats.requestCount += 1;
+    stats.lastUpdated = Date.now();
+    
+    await chrome.storage.local.set({ tokenStats: stats });
+    
+    // Kosten aktualisieren wenn aktiviert
+    await this.updateCost(usage.total_tokens || 0);
+    
+    return stats;
+  }
+
+  async updateCost(newTokens) {
+    const settings = await chrome.storage.sync.get([
+      'enableTokenCost', 'tokenCostAmount', 'tokenCostPer'
+    ]);
+    
+    if (!settings.enableTokenCost) return;
+    
+    const costAmount = settings.tokenCostAmount || 1;
+    const costPer = settings.tokenCostPer || 10000;
+    
+    // Cent pro X Tokens -> Hauptwährung
+    const costPerToken = (costAmount / 100) / costPer;
+    const addedCost = newTokens * costPerToken;
+    
+    const costData = await chrome.storage.local.get(['totalCost']);
+    const newTotalCost = (costData.totalCost || 0) + addedCost;
+    
+    await chrome.storage.local.set({ totalCost: newTotalCost });
+  }
+
+  async resetTokenStats() {
+    await chrome.storage.local.set({ 
+      tokenStats: {
+        totalTokens: 0,
+        promptTokens: 0,
+        completionTokens: 0,
+        requestCount: 0,
+        lastUpdated: null
+      }
+    });
   }
 
   async setDefaultSettings() {

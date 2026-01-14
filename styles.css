@@ -1,4 +1,4 @@
-/* Smart Web Translator v2.3 - Überarbeitetes Farbkonzept */
+/* Smart Web Translator v3.0 - LM Studio + Live Progress */
 
 /* === Material Design Farben - Verbesserte Kontraste === */
 :root {
@@ -456,6 +456,17 @@
   font-size: 14px;
   color: var(--md-on-surface);
   font-weight: 500;
+}
+
+/* Plain-Text Paragraph Styling */
+.smt-pre-paragraph {
+  display: inline;
+}
+
+.smt-pre-paragraph.smt-translated-text {
+  background: rgba(21, 101, 192, 0.08);
+  border-radius: 2px;
+  padding: 1px 0;
 }
 
 /* === Notifications === */

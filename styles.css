@@ -262,6 +262,7 @@
 }
 
 .smt-tab-panel.active {
+  color: #ccc;
   display: block;
 }
 
@@ -358,7 +359,7 @@
 @keyframes smt-spin {
   to { transform: rotate(360deg); }
 }
-}
+
 
 .smt-original-tooltip.smt-visible {
   opacity: 1;

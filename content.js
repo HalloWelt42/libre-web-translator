@@ -1,5 +1,6 @@
-// Content Script - Smart Web Translator v2.1
+// Content Script - Smart Web Translator v3.0
 // Mit LocalStorage Cache, Pin-Funktion, Hover-Original, Toggle
+// NEU: Plain-Text Support (RFC, .txt, Pre-Only Seiten)
 
 class SmartTranslator {
   constructor() {
@@ -48,7 +49,9 @@ class SmartTranslator {
       'tooltipAutoHide', 'tooltipAutoHideDelay', 'enableDoubleClick',
       'showOriginalInTooltip', 'showAlternatives', 'enableTTS',
       'skipCodeBlocks', 'skipBlockquotes', 'useTabsForAlternatives',
-      'simplifyPdfExport', 'fixInlineSpacing', 'tabWordThreshold'
+      'simplifyPdfExport', 'fixInlineSpacing', 'tabWordThreshold',
+      // LM Studio Settings
+      'apiType', 'lmStudioUrl', 'lmStudioModel', 'lmStudioContext'
     ]);
 
     this.settings.serviceUrl = this.settings.serviceUrl || 'http://localhost:5000/translate';
@@ -63,6 +66,7 @@ class SmartTranslator {
     this.settings.simplifyPdfExport = this.settings.simplifyPdfExport || false;
     this.settings.fixInlineSpacing = this.settings.fixInlineSpacing !== false;
     this.settings.tabWordThreshold = this.settings.tabWordThreshold || 20;
+    this.settings.apiType = this.settings.apiType || 'libretranslate';
   }
 
   // === Cache Management ===
@@ -649,20 +653,34 @@ class SmartTranslator {
       return;
     }
 
+    // API-Typ laden für Progress-Anzeige
+    const apiSettings = await chrome.storage.sync.get(['apiType', 'lmStudioContext']);
+    this.settings.apiType = apiSettings.apiType || 'libretranslate';
+    this.settings.lmStudioContext = apiSettings.lmStudioContext || 'general';
+
     this.showProgress(true);
     this.translationMode = mode;
 
     try {
-      // Leerzeichen bei Inline-Tags normalisieren BEVOR wir Textknoten sammeln
-      if (this.settings.fixInlineSpacing) {
-        this.normalizeInlineSpacing();
+      // Prüfe ob Plain-Text Seite
+      const isPlainText = this.detectPlainTextPage();
+      
+      let textNodes;
+      if (isPlainText) {
+        textNodes = this.handlePlainTextPage();
+      } else {
+        // Leerzeichen bei Inline-Tags normalisieren
+        if (this.settings.fixInlineSpacing) {
+          this.normalizeInlineSpacing();
+        }
+        textNodes = this.findTranslatableTextNodes();
       }
 
-      const textNodes = this.findTranslatableTextNodes();
       const total = textNodes.length;
       let translated = 0;
       const cacheTranslations = {};
 
+      // Batch-Verarbeitung (bewährt)
       const batchSize = 5;
       for (let i = 0; i < textNodes.length; i += batchSize) {
         const batch = textNodes.slice(i, i + batchSize);
@@ -717,6 +735,89 @@ class SmartTranslator {
       this.showProgress(false);
       this.showNotification('Fehler bei Seitenübersetzung', 'error');
     }
+  }
+
+  // Erkennt Plain-Text Seiten (RFC, .txt, Pre-Only)
+  detectPlainTextPage() {
+    const url = window.location.href.toLowerCase();
+    const hostname = window.location.hostname.toLowerCase();
+    
+    // URL-basierte Erkennung
+    if (url.endsWith('.txt') || url.endsWith('.text')) return true;
+    
+    // RFC-Seiten
+    if (hostname.includes('ietf.org') || hostname.includes('rfc-editor.org')) return true;
+    if (url.includes('/rfc/') || url.includes('/doc/rfc')) return true;
+    
+    // Content-Type Check (wenn verfügbar)
+    const contentType = document.contentType || '';
+    if (contentType.includes('text/plain')) return true;
+    
+    // DOM-basierte Erkennung: Nur ein Pre-Element mit viel Text?
+    const body = document.body;
+    const preElements = body.querySelectorAll('pre');
+    
+    if (preElements.length === 1) {
+      const pre = preElements[0];
+      const preText = pre.textContent.length;
+      const bodyText = body.textContent.length;
+      // Wenn Pre mehr als 80% des Seiteninhalts ausmacht
+      if (preText > 1000 && preText / bodyText > 0.8) return true;
+    }
+    
+    // Keine anderen Block-Elemente außer Pre?
+    const blocks = body.querySelectorAll('p, div, article, section, h1, h2, h3, h4, h5, h6');
+    if (blocks.length < 3 && preElements.length > 0) return true;
+    
+    return false;
+  }
+
+  // Behandelt Plain-Text Seiten speziell
+  handlePlainTextPage() {
+    const preElements = document.querySelectorAll('pre');
+    const textNodes = [];
+    
+    preElements.forEach(pre => {
+      // Pre-Element in logische Abschnitte aufteilen
+      const text = pre.textContent;
+      const paragraphs = this.splitIntoParagraphs(text);
+      
+      // Erstelle für jeden Absatz einen virtuellen Container
+      pre.innerHTML = ''; // Leeren
+      
+      paragraphs.forEach(para => {
+        if (para.trim().length < 3) {
+          // Leerzeilen beibehalten
+          pre.appendChild(document.createTextNode(para + '\n\n'));
+          return;
+        }
+        
+        const span = document.createElement('span');
+        span.className = 'smt-pre-paragraph';
+        span.textContent = para;
+        pre.appendChild(span);
+        pre.appendChild(document.createTextNode('\n\n'));
+        
+        // TextNode aus dem Span für Übersetzung
+        if (span.firstChild) {
+          textNodes.push(span.firstChild);
+        }
+      });
+    });
+    
+    // Falls keine Pre-Elemente, versuche Body-Text
+    if (textNodes.length === 0) {
+      return this.findTranslatableTextNodes();
+    }
+    
+    return textNodes;
+  }
+
+  // Teilt Text in logische Absätze (für Plain-Text/RFC)
+  splitIntoParagraphs(text) {
+    // Erkenne Absätze anhand von Leerzeilen
+    const paragraphs = text.split(/\n\s*\n/);
+    return paragraphs.map(p => p.trim()).filter(p => p.length > 0);
   }
 
   wrapWithHoverOriginal(node, original, translated) {

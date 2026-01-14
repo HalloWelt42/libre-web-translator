@@ -15,6 +15,12 @@ Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale 
   - ⚖️ Recht / Juristisch
   - 📝 Eigener Custom-Prompt
 
+### 📄 Plain-Text & RFC Support
+- **Automatische Erkennung** von .txt Dateien
+- **RFC-Seiten** (ietf.org, rfc-editor.org) werden speziell erkannt
+- **Pre-Only Seiten** werden intelligent verarbeitet
+- Text wird in **logische Absätze** aufgeteilt (anhand von Leerzeilen)
+
 ### 📊 Einstellbare Parameter
 - **Temperatur-Slider** (0.0–1.0) – niedriger = präziser
 - **Max Tokens** – für längere Übersetzungen
@@ -29,7 +35,7 @@ Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale 
 
 ## LM Studio Setup
 
-1. **LM Studio starten** und ein Modell laden
+1. **LM Studio starten** und ein Chat-Modell laden (z.B. Qwen3, Llama)
 2. **Server aktivieren**: Developer → Start Server
 3. In der Erweiterung → Einstellungen:
    - API-Backend: "LM Studio (LLM)" auswählen
@@ -37,12 +43,15 @@ Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale 
    - Modelle laden klicken
    - Gewünschtes Modell auswählen
 
+**Wichtig:** Nur Chat/Instruct-Modelle verwenden, keine Embedding-Modelle!
+
 ## Empfohlene Modelle (Mac M4 Max 128GB)
 
 | Modell | RAM | Beschreibung |
 |--------|-----|--------------|
 | **Qwen3-32B-Instruct MLX** | ~20GB | Beste Übersetzungsqualität |
 | **Qwen3-30B-A3B MLX** | ~18GB | MoE, schnell & effizient |
+| **Qwen3-14B-Instruct MLX** | ~10GB | Schnell für Echtzeit |
 | **Llama-3.3-70B MLX** | ~45GB | Stark bei EU-Sprachen |
 
 ## Dateien
@@ -51,7 +60,7 @@ Browser-Erweiterung mit **Dual-API-System**: LibreTranslate + LM Studio (lokale 
 smart-translator/
 ├── manifest.json          # Extension Config
 ├── background.js          # Service Worker mit Dual-API
-├── content.js             # Seiten-Manipulation
+├── content.js             # Seiten-Manipulation + Plain-Text Support
 ├── popup.html/js          # Popup UI
 ├── sidepanel.html/js      # Side Panel
 ├── options.html/js        # Einstellungen mit API-Auswahl
@@ -70,6 +79,7 @@ smart-translator/
 - ✅ Kontext-Notizen Anzeige
 - ✅ API-Badge in Popup/Sidepanel
 - ✅ Batch-Übersetzung via LLM
+- ✅ **Plain-Text & RFC Support**
 
 ### v2.1
 - LibreTranslate Integration

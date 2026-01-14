@@ -1,4 +1,4 @@
-// Popup JavaScript - Smart Web Translator v2.1
+// Popup JavaScript - Smart Web Translator v3.0
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
@@ -7,9 +7,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadSettings() {
-  const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+  const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang', 'apiType']);
   document.getElementById('sourceLang').value = settings.sourceLang || 'auto';
   document.getElementById('targetLang').value = settings.targetLang || 'de';
+  
+  // API-Badge aktualisieren
+  updateApiBadge(settings.apiType || 'libretranslate');
+}
+
+function updateApiBadge(apiType) {
+  const badge = document.getElementById('apiBadge');
+  const badgeText = document.getElementById('apiBadgeText');
+  
+  if (apiType === 'lmstudio') {
+    badge.classList.add('lmstudio');
+    badgeText.textContent = 'LLM';
+    badge.title = 'LM Studio (Lokales LLM)';
+  } else {
+    badge.classList.remove('lmstudio');
+    badgeText.textContent = 'Libre';
+    badge.title = 'LibreTranslate';
+  }
 }
 
 async function checkPageCache() {

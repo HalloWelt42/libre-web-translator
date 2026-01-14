@@ -6,20 +6,21 @@
   <title>Smart Translator</title>
   <style>
     :root {
-      --md-primary: #1976D2;
-      --md-primary-dark: #1565C0;
-      --md-primary-light: #BBDEFB;
-      --md-accent: #FF5722;
-      --md-success: #4CAF50;
-      --md-success-light: #C8E6C9;
-      --md-error: #F44336;
-      --md-error-light: #FFCDD2;
-      --md-warning: #FF9800;
-      --md-warning-light: #FFE0B2;
+      /* Verbesserte Farben für bessere Kontraste */
+      --md-primary: #1565C0;
+      --md-primary-dark: #0D47A1;
+      --md-primary-light: #E3F2FD;
+      --md-accent: #E64A19;
+      --md-success: #2E7D32;
+      --md-success-light: #E8F5E9;
+      --md-error: #C62828;
+      --md-error-light: #FFEBEE;
+      --md-warning: #EF6C00;
+      --md-warning-light: #FFF3E0;
       --md-surface: #FFFFFF;
-      --md-background: #FAFAFA;
+      --md-background: #F5F5F5;
       --md-on-surface: #212121;
-      --md-on-surface-medium: #757575;
+      --md-on-surface-medium: #616161;
       --md-divider: #E0E0E0;
     }
 
@@ -42,8 +43,28 @@
       gap: 12px;
     }
 
-    .header h1 { font-size: 18px; font-weight: 500; }
+    .header h1 { font-size: 18px; font-weight: 500; flex: 1; }
     .header svg { width: 24px; height: 24px; }
+
+    .api-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .api-badge.lmstudio {
+      background: rgba(139, 92, 246, 0.3);
+    }
+
+    .api-badge svg {
+      width: 14px;
+      height: 14px;
+    }
 
     .content { padding: 16px; }
 
@@ -349,29 +370,38 @@
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --md-surface: #424242;
-        --md-background: #303030;
+        --md-surface: #2D2D2D;
+        --md-background: #1E1E1E;
         --md-on-surface: #FFFFFF;
-        --md-on-surface-medium: #B0B0B0;
-        --md-divider: #616161;
+        --md-on-surface-medium: #BDBDBD;
+        --md-divider: #404040;
+        --md-primary: #64B5F6;
         --md-primary-light: #1565C0;
-        --md-success-light: #2E7D32;
+        --md-success: #81C784;
+        --md-success-light: #1B5E20;
+        --md-error: #EF5350;
         --md-warning-light: #E65100;
       }
 
+      body {
+        background: var(--md-background);
+      }
+
       textarea, .lang-row select {
-        background: #505050;
-        border-color: #616161;
-        color: white;
+        background: #383838;
+        border-color: #505050;
+        color: #FFFFFF;
       }
 
       .shortcut-row kbd {
-        background: #505050;
-        color: white;
+        background: #383838;
+        color: #E0E0E0;
+        border-color: #505050;
       }
 
       .cache-status {
         background: #37474F;
+        border-color: #455A64;
       }
 
       .cache-status.has-cache {
@@ -387,6 +417,33 @@
         background: #1565C0;
         color: #FFFFFF;
       }
+
+      .action-card {
+        background: #383838;
+        border-color: #505050;
+      }
+
+      .action-card:hover {
+        background: #454545;
+        border-color: var(--md-primary);
+      }
+
+      .action-card span {
+        color: #E0E0E0;
+      }
+
+      .shortcuts {
+        background: #2D2D2D;
+        border-color: #404040;
+      }
+
+      .footer a {
+        color: #BDBDBD;
+      }
+
+      .footer a:hover {
+        color: var(--md-primary);
+      }
     }
   </style>
 </head>
@@ -396,6 +453,12 @@
       <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
     </svg>
     <h1>Smart Translator</h1>
+    <div class="api-badge" id="apiBadge" title="Aktives API-Backend">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+      </svg>
+      <span id="apiBadgeText">Libre</span>
+    </div>
   </div>
 
   <div class="content">

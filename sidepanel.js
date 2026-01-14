@@ -1,4 +1,4 @@
-// Side Panel JavaScript - Smart Web Translator v2.1
+// Side Panel JavaScript - Smart Web Translator v3.0
 
 class SidePanelController {
   constructor() {
@@ -17,9 +17,29 @@ class SidePanelController {
   }
 
   async loadSettings() {
-    const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+    const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang', 'apiType']);
     document.getElementById('sourceLang').value = settings.sourceLang || 'auto';
     document.getElementById('targetLang').value = settings.targetLang || 'de';
+    
+    // API-Badge aktualisieren
+    this.updateApiBadge(settings.apiType || 'libretranslate');
+  }
+
+  updateApiBadge(apiType) {
+    const badge = document.getElementById('apiBadge');
+    const badgeText = document.getElementById('apiBadgeText');
+    
+    if (badge && badgeText) {
+      if (apiType === 'lmstudio') {
+        badge.classList.add('lmstudio');
+        badgeText.textContent = 'LLM';
+        badge.title = 'LM Studio (Lokales LLM)';
+      } else {
+        badge.classList.remove('lmstudio');
+        badgeText.textContent = 'Libre';
+        badge.title = 'LibreTranslate';
+      }
+    }
   }
 
   setupTabs() {
@@ -91,12 +111,17 @@ class SidePanelController {
     const translateBtn = document.getElementById('translateBtn');
     const resultBox = document.getElementById('resultBox');
     const resultActions = document.getElementById('resultActions');
+    const contextNotes = document.getElementById('contextNotes');
+    const contextNotesText = document.getElementById('contextNotesText');
 
     const sourceLang = document.getElementById('sourceLang').value;
     const targetLang = document.getElementById('targetLang').value;
 
     translateBtn.disabled = true;
     translateBtn.innerHTML = '<div class="spinner"></div> Übersetze...';
+    
+    // Context Notes ausblenden während der Übersetzung
+    if (contextNotes) contextNotes.classList.remove('show');
 
     try {
       const result = await chrome.runtime.sendMessage({
@@ -113,6 +138,12 @@ class SidePanelController {
         this.currentTranslation = result.translatedText;
         resultActions.style.display = 'flex';
 
+        // Kontext-Notizen anzeigen (nur bei LM Studio)
+        if (result.contextNotes && contextNotes && contextNotesText) {
+          contextNotesText.textContent = result.contextNotes;
+          contextNotes.classList.add('show');
+        }
+
         await chrome.runtime.sendMessage({
           action: 'addToHistory',
           entry: {
@@ -120,7 +151,8 @@ class SidePanelController {
             translated: result.translatedText,
             source: sourceLang,
             target: targetLang,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            apiType: result.apiType
           }
         });
       } else {

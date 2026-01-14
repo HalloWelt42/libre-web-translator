@@ -334,6 +334,129 @@
       color: #DC2626;
     }
 
+    /* API Type Selector */
+    .api-type-selector {
+      display: flex;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .api-type-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border: 2px solid #E5E7EB;
+      border-radius: 10px;
+      background: #F9FAFB;
+      color: #6B7280;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .api-type-btn:hover {
+      border-color: #C7D2FE;
+      background: #EEF2FF;
+      color: #4F46E5;
+    }
+
+    .api-type-btn.active {
+      border-color: #4F46E5;
+      background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
+      color: #4F46E5;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+    }
+
+    .api-type-btn svg {
+      flex-shrink: 0;
+    }
+
+    .api-settings {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #E5E7EB;
+    }
+
+    .input-with-button {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-with-button input {
+      flex: 1;
+    }
+
+    .btn-small {
+      padding: 10px 12px;
+      background: #F3F4F6;
+      border: 1px solid #D1D5DB;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-small:hover {
+      background: #E5E7EB;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slider-container input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: #E5E7EB;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .slider-container input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #4F46E5;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+    }
+
+    .slider-value {
+      min-width: 36px;
+      padding: 4px 8px;
+      background: #F3F4F6;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      color: #4F46E5;
+    }
+
+    .info-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #92400E;
+      margin-top: 16px;
+    }
+
+    .info-box svg {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
     footer {
       text-align: center;
       margin-top: 40px;
@@ -361,6 +484,14 @@
       .test-result { background: #1F2937; border-color: #4B5563; color: #F9FAFB; }
       .btn-secondary { background: #374151; color: #F3F4F6; border-color: #4B5563; }
       .actions { border-color: #374151; }
+      .api-type-btn { background: #374151; border-color: #4B5563; color: #9CA3AF; }
+      .api-type-btn:hover { background: #4B5563; border-color: #6366F1; color: #A5B4FC; }
+      .api-type-btn.active { background: #312E81; border-color: #6366F1; color: #A5B4FC; }
+      .api-settings { border-color: #374151; }
+      .btn-small { background: #374151; border-color: #4B5563; }
+      .btn-small:hover { background: #4B5563; }
+      .slider-value { background: #374151; color: #A5B4FC; }
+      .info-box { background: #78350F; border-color: #B45309; color: #FEF3C7; }
     }
 
     @media (max-width: 600px) {
@@ -391,21 +522,103 @@
         API-Verbindung
       </h2>
 
+      <!-- API-Typ Auswahl -->
       <div class="form-group">
-        <label for="serviceUrl">Übersetzungs-API URL</label>
-        <div class="description">Die URL Ihres LibreTranslate-Servers</div>
-        <input type="url" id="serviceUrl" placeholder="http://localhost:5000/translate">
+        <label>API-Backend</label>
+        <div class="description">Wählen Sie Ihren Übersetzungsdienst</div>
+        <div class="api-type-selector">
+          <button type="button" class="api-type-btn active" data-type="libretranslate">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04M18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12m-2.62 7l1.62-4.33L19.12 17h-3.24z"/></svg>
+            LibreTranslate
+          </button>
+          <button type="button" class="api-type-btn" data-type="lmstudio">
+            <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M21 10.12h-6.78l2.74-2.82c-2.73-2.7-7.15-2.8-9.88-.1-2.73 2.71-2.73 7.08 0 9.79s7.15 2.71 9.88 0C18.32 15.65 19 14.08 19 12.1h2c0 1.98-.88 4.55-2.64 6.29-3.51 3.48-9.21 3.48-12.72 0-3.5-3.47-3.53-9.11-.02-12.58s9.14-3.47 12.65 0L21 3v7.12zM12.5 8v4.25l3.5 2.08-.72 1.21L11 13V8h1.5z"/></svg>
+            LM Studio (LLM)
+          </button>
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="apiKey">API-Schlüssel (optional)</label>
-        <div class="description">Falls Ihr Server einen API-Schlüssel erfordert</div>
-        <input type="text" id="apiKey" placeholder="Ihr API-Schlüssel">
+      <!-- LibreTranslate Einstellungen -->
+      <div id="libretranslate-settings" class="api-settings">
+        <div class="form-group">
+          <label for="serviceUrl">LibreTranslate API URL</label>
+          <div class="description">Die URL Ihres LibreTranslate-Servers</div>
+          <input type="url" id="serviceUrl" placeholder="http://localhost:5000/translate">
+        </div>
+
+        <div class="form-group">
+          <label for="apiKey">API-Schlüssel (optional)</label>
+          <div class="description">Falls Ihr Server einen API-Schlüssel erfordert</div>
+          <input type="text" id="apiKey" placeholder="Ihr API-Schlüssel">
+        </div>
       </div>
 
+      <!-- LM Studio Einstellungen -->
+      <div id="lmstudio-settings" class="api-settings" style="display: none;">
+        <div class="form-group">
+          <label for="lmStudioUrl">LM Studio Server URL</label>
+          <div class="description">IP und Port Ihres LM Studio Servers</div>
+          <div class="input-with-button">
+            <input type="url" id="lmStudioUrl" placeholder="http://192.168.178.45:1234">
+            <button type="button" class="btn btn-small" id="refreshModelsBtn" title="Modelle laden">
+              <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="lmStudioModel">Modell</label>
+          <div class="description">Das geladene Modell in LM Studio</div>
+          <select id="lmStudioModel">
+            <option value="">-- Modelle laden --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="lmStudioContext">Fachkontext</label>
+          <div class="description">Optimiert die Übersetzung für spezifische Fachbereiche</div>
+          <select id="lmStudioContext">
+            <option value="general">🌐 Allgemein</option>
+            <option value="automotive">🚗 Kfz / Automotive</option>
+            <option value="technical">⚙️ Technisch / IT</option>
+            <option value="medical">🏥 Medizin</option>
+            <option value="legal">⚖️ Recht / Juristisch</option>
+            <option value="custom">📝 Eigener Prompt</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="customPromptGroup" style="display: none;">
+          <label for="lmStudioCustomPrompt">Eigener System-Prompt</label>
+          <div class="description">Definieren Sie Ihre eigenen Übersetzungsregeln</div>
+          <textarea id="lmStudioCustomPrompt" rows="4" placeholder="Du bist ein Fachübersetzer für..."></textarea>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="lmStudioTemperature">Temperatur</label>
+            <div class="description">Niedriger = präziser</div>
+            <div class="slider-container">
+              <input type="range" id="lmStudioTemperature" min="0" max="1" step="0.1" value="0.1">
+              <span class="slider-value" id="temperatureValue">0.1</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="lmStudioMaxTokens">Max Tokens</label>
+            <div class="description">Maximale Antwortlänge</div>
+            <input type="number" id="lmStudioMaxTokens" min="100" max="8000" step="100" value="2000">
+          </div>
+        </div>
+
+        <div class="info-box">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          <span>LM Studio muss gestartet sein und der Server unter "Developer" aktiviert.</span>
+        </div>
+      </div>
+
+      <!-- Verbindungstest -->
       <div class="test-section">
         <label>Verbindung testen</label>
-        <input type="text" id="testInput" placeholder="Text zum Testen eingeben...">
+        <input type="text" id="testInput" placeholder="Hello, world!" value="Hello, world!">
         <button class="btn btn-secondary" id="testBtn">
           <svg viewBox="0 0 24 24"><path d="M19 8l-4 4h3c0 3.31-2.69 6-6 6-1.01 0-1.97-.25-2.8-.7l-1.46 1.46C8.97 19.54 10.43 20 12 20c4.42 0 8-3.58 8-8h3l-4-4zM6 12c0-3.31 2.69-6 6-6 1.01 0 1.97.25 2.8.7l1.46-1.46C15.03 4.46 13.57 4 12 4c-4.42 0-8 3.58-8 8H1l4 4 4-4H6z"/></svg>
           Testen
@@ -611,6 +824,55 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
+
+      <div class="toggle-group" style="margin-top: 16px;">
+        <div class="toggle-info">
+          <div class="label">Inline-Abstände korrigieren</div>
+          <div class="desc">Fügt Leerzeichen bei Tag-Wechseln ein (z.B. &lt;strong&gt;)</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="fixInlineSpacing" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Anzeige-Optionen -->
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+        Anzeige-Optionen
+      </h2>
+
+      <div class="toggle-group">
+        <div class="toggle-info">
+          <div class="label">Tabs für Alternativen</div>
+          <div class="desc">Bei längeren Texten: Alternativen als Tabs anzeigen</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="useTabsForAlternatives">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="tabWordThreshold">Tabs ab Wortanzahl</label>
+        <input type="number" id="tabWordThreshold" min="5" max="100" value="20" style="width: 80px;">
+        <div class="desc" style="margin-top: 4px; font-size: 12px; color: var(--md-on-surface-medium);">
+          Tabs werden erst ab dieser Wortanzahl angezeigt (Standard: 20)
+        </div>
+      </div>
+
+      <div class="toggle-group" style="margin-top: 16px;">
+        <div class="toggle-info">
+          <div class="label">PDF vereinfacht exportieren</div>
+          <div class="desc">Erzeugt sauberes, Wiki-ähnliches Layout beim PDF-Export</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="simplifyPdfExport">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
     <!-- Text-to-Speech -->
@@ -698,7 +960,7 @@
     </div>
 
     <footer>
-      <p>Smart Translator v2.0 · <a href="https://github.com/LibreTranslate/LibreTranslate" target="_blank">Powered by LibreTranslate</a></p>
+      <p>Smart Translator v3.0 · <a href="https://github.com/LibreTranslate/LibreTranslate" target="_blank">LibreTranslate</a> · <a href="https://lmstudio.ai" target="_blank">LM Studio</a></p>
     </footer>
   </div>
 

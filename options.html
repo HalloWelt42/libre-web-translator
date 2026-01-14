@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Smart Translator - Einstellungen</title>
   <style>
+    /* === Material Design Farbvariablen === */
+    :root {
+      --md-primary: #1565C0;
+      --md-primary-dark: #0D47A1;
+      --md-primary-light: #E3F2FD;
+      --md-primary-text: #FFFFFF;
+      
+      --md-accent: #E64A19;
+      --md-success: #2E7D32;
+      --md-success-light: #E8F5E9;
+      --md-error: #C62828;
+      --md-error-light: #FFEBEE;
+      --md-warning: #EF6C00;
+      --md-warning-light: #FFF3E0;
+      
+      --md-surface: #FFFFFF;
+      --md-background: #F5F5F5;
+      --md-on-surface: #212121;
+      --md-on-surface-medium: #616161;
+      --md-on-surface-disabled: #9E9E9E;
+      --md-divider: #E0E0E0;
+    }
+    
     * {
       margin: 0;
       padding: 0;
@@ -13,8 +36,8 @@
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #F3F4F6;
-      color: #111827;
+      background: var(--md-background);
+      color: var(--md-on-surface);
       line-height: 1.6;
     }
 
@@ -32,7 +55,7 @@
     header h1 {
       font-size: 28px;
       font-weight: 700;
-      color: #4F46E5;
+      color: var(--md-primary);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -46,12 +69,12 @@
     }
 
     header p {
-      color: #6B7280;
+      color: var(--md-on-surface-medium);
       margin-top: 8px;
     }
 
     .card {
-      background: white;
+      background: var(--md-surface);
       border-radius: 12px;
       padding: 24px;
       margin-bottom: 24px;
@@ -63,7 +86,7 @@
       font-weight: 600;
       margin-bottom: 20px;
       padding-bottom: 12px;
-      border-bottom: 1px solid #E5E7EB;
+      border-bottom: 1px solid var(--md-divider);
       display: flex;
       align-items: center;
       gap: 10px;
@@ -72,7 +95,7 @@
     .card h2 svg {
       width: 20px;
       height: 20px;
-      fill: #4F46E5;
+      fill: var(--md-primary);
     }
 
     .form-group {
@@ -87,12 +110,12 @@
       display: block;
       font-weight: 500;
       margin-bottom: 6px;
-      color: #374151;
+      color: var(--md-on-surface);
     }
 
     .form-group .description {
       font-size: 13px;
-      color: #6B7280;
+      color: var(--md-on-surface-medium);
       margin-bottom: 8px;
     }
 
@@ -103,7 +126,7 @@
     textarea {
       width: 100%;
       padding: 10px 14px;
-      border: 1px solid #D1D5DB;
+      border: 1px solid var(--md-divider);
       border-radius: 8px;
       font-size: 14px;
       transition: all 0.2s ease;
@@ -113,7 +136,7 @@
     select:focus,
     textarea:focus {
       outline: none;
-      border-color: #4F46E5;
+      border-color: var(--md-primary);
       box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
     }
 
@@ -133,7 +156,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 14px 16px;
-      background: #F9FAFB;
+      background: var(--md-surface);
       border-radius: 8px;
       margin-bottom: 12px;
     }
@@ -148,12 +171,12 @@
 
     .toggle-info .label {
       font-weight: 500;
-      color: #374151;
+      color: var(--md-on-surface);
     }
 
     .toggle-info .desc {
       font-size: 12px;
-      color: #6B7280;
+      color: var(--md-on-surface-medium);
       margin-top: 2px;
     }
 
@@ -178,7 +201,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: #D1D5DB;
+      background: var(--md-divider);
       border-radius: 26px;
       transition: 0.3s;
     }
@@ -197,7 +220,7 @@
     }
 
     .toggle input:checked + .toggle-slider {
-      background: #4F46E5;
+      background: var(--md-primary);
     }
 
     .toggle input:checked + .toggle-slider:before {
@@ -218,7 +241,7 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #4F46E5, #7C3AED);
+      background: linear-gradient(135deg, var(--md-primary), var(--md-primary-dark));
       color: white;
     }
 
@@ -228,22 +251,22 @@
     }
 
     .btn-secondary {
-      background: #F3F4F6;
-      color: #374151;
-      border: 1px solid #D1D5DB;
+      background: var(--md-background);
+      color: var(--md-on-surface);
+      border: 1px solid var(--md-divider);
     }
 
     .btn-secondary:hover {
-      background: #E5E7EB;
+      background: var(--md-divider);
     }
 
     .btn-danger {
-      background: #FEE2E2;
-      color: #DC2626;
+      background: var(--md-error-light);
+      color: var(--md-error);
     }
 
     .btn-danger:hover {
-      background: #FECACA;
+      background: var(--md-error-light);
     }
 
     .btn svg {
@@ -258,7 +281,7 @@
       justify-content: flex-end;
       margin-top: 24px;
       padding-top: 24px;
-      border-top: 1px solid #E5E7EB;
+      border-top: 1px solid var(--md-divider);
     }
 
     .status {
@@ -270,20 +293,20 @@
 
     .status.success {
       display: block;
-      background: #ECFDF5;
-      color: #065F46;
-      border: 1px solid #A7F3D0;
+      background: var(--md-success-light);
+      color: var(--md-success);
+      border: 1px solid var(--md-success-light);
     }
 
     .status.error {
       display: block;
-      background: #FEF2F2;
-      color: #991B1B;
-      border: 1px solid #FECACA;
+      background: var(--md-error-light);
+      color: var(--md-error);
+      border: 1px solid var(--md-error-light);
     }
 
     .shortcut-list {
-      background: #F9FAFB;
+      background: var(--md-surface);
       border-radius: 8px;
       padding: 16px;
     }
@@ -293,7 +316,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 10px 0;
-      border-bottom: 1px solid #E5E7EB;
+      border-bottom: 1px solid var(--md-divider);
     }
 
     .shortcut-item:last-child {
@@ -306,12 +329,12 @@
       border-radius: 6px;
       font-family: monospace;
       font-size: 13px;
-      border: 1px solid #D1D5DB;
+      border: 1px solid var(--md-divider);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .test-section {
-      background: #F9FAFB;
+      background: var(--md-surface);
       border-radius: 8px;
       padding: 16px;
     }
@@ -324,14 +347,14 @@
       padding: 12px;
       background: white;
       border-radius: 6px;
-      border: 1px solid #E5E7EB;
+      border: 1px solid var(--md-divider);
       min-height: 60px;
       font-size: 14px;
     }
 
     .test-result.error {
-      border-color: #FECACA;
-      color: #DC2626;
+      border-color: var(--md-error-light);
+      color: var(--md-error);
     }
 
     /* API Type Selector */
@@ -348,10 +371,10 @@
       justify-content: center;
       gap: 10px;
       padding: 14px 20px;
-      border: 2px solid #E5E7EB;
+      border: 2px solid var(--md-divider);
       border-radius: 10px;
-      background: #F9FAFB;
-      color: #6B7280;
+      background: var(--md-surface);
+      color: var(--md-on-surface-medium);
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -359,15 +382,15 @@
     }
 
     .api-type-btn:hover {
-      border-color: #C7D2FE;
-      background: #EEF2FF;
-      color: #4F46E5;
+      border-color: var(--md-primary-light);
+      background: var(--md-primary-light);
+      color: var(--md-primary);
     }
 
     .api-type-btn.active {
-      border-color: #4F46E5;
-      background: linear-gradient(135deg, #EEF2FF, #E0E7FF);
-      color: #4F46E5;
+      border-color: var(--md-primary);
+      background: linear-gradient(135deg, var(--md-primary-light), var(--md-primary-light));
+      color: var(--md-primary);
       box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
     }
 
@@ -378,7 +401,7 @@
     .api-settings {
       margin-top: 20px;
       padding-top: 20px;
-      border-top: 1px solid #E5E7EB;
+      border-top: 1px solid var(--md-divider);
     }
 
     .input-with-button {
@@ -392,15 +415,15 @@
 
     .btn-small {
       padding: 10px 12px;
-      background: #F3F4F6;
-      border: 1px solid #D1D5DB;
+      background: var(--md-background);
+      border: 1px solid var(--md-divider);
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
     }
 
     .btn-small:hover {
-      background: #E5E7EB;
+      background: var(--md-divider);
     }
 
     .slider-container {
@@ -413,7 +436,7 @@
       flex: 1;
       height: 6px;
       border-radius: 3px;
-      background: #E5E7EB;
+      background: var(--md-divider);
       -webkit-appearance: none;
       appearance: none;
     }
@@ -423,7 +446,7 @@
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: #4F46E5;
+      background: var(--md-primary);
       cursor: pointer;
       box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
     }
@@ -431,12 +454,12 @@
     .slider-value {
       min-width: 36px;
       padding: 4px 8px;
-      background: #F3F4F6;
+      background: var(--md-background);
       border-radius: 4px;
       font-size: 13px;
       font-weight: 600;
       text-align: center;
-      color: #4F46E5;
+      color: var(--md-primary);
     }
 
     .info-box {
@@ -444,11 +467,11 @@
       align-items: flex-start;
       gap: 10px;
       padding: 12px 16px;
-      background: #FEF3C7;
-      border: 1px solid #FCD34D;
+      background: var(--md-warning-light);
+      border: 1px solid var(--md-warning);
       border-radius: 8px;
       font-size: 13px;
-      color: #92400E;
+      color: var(--md-warning);
       margin-top: 16px;
     }
 
@@ -460,38 +483,153 @@
     footer {
       text-align: center;
       margin-top: 40px;
-      color: #9CA3AF;
+      color: var(--md-on-surface-disabled);
       font-size: 13px;
     }
 
     footer a {
-      color: #4F46E5;
+      color: var(--md-primary);
       text-decoration: none;
     }
 
     @media (prefers-color-scheme: dark) {
-      body { background: #111827; color: #F9FAFB; }
-      .card { background: #1F2937; }
-      .card h2 { border-color: #374151; }
-      .form-group label { color: #D1D5DB; }
-      input, select, textarea { background: #374151; border-color: #4B5563; color: #F9FAFB; }
-      .toggle-group { background: #374151; }
-      .toggle-info .label { color: #F3F4F6; }
-      .shortcut-list { background: #374151; }
-      .shortcut-item { border-color: #4B5563; }
-      .shortcut-item kbd { background: #1F2937; border-color: #4B5563; color: #F9FAFB; }
-      .test-section { background: #374151; }
-      .test-result { background: #1F2937; border-color: #4B5563; color: #F9FAFB; }
-      .btn-secondary { background: #374151; color: #F3F4F6; border-color: #4B5563; }
-      .actions { border-color: #374151; }
-      .api-type-btn { background: #374151; border-color: #4B5563; color: #9CA3AF; }
-      .api-type-btn:hover { background: #4B5563; border-color: #6366F1; color: #A5B4FC; }
-      .api-type-btn.active { background: #312E81; border-color: #6366F1; color: #A5B4FC; }
-      .api-settings { border-color: #374151; }
-      .btn-small { background: #374151; border-color: #4B5563; }
-      .btn-small:hover { background: #4B5563; }
-      .slider-value { background: #374151; color: #A5B4FC; }
-      .info-box { background: #78350F; border-color: #B45309; color: #FEF3C7; }
+      :root {
+        --md-primary: #64B5F6;
+        --md-primary-dark: #1565C0;
+        --md-primary-light: #0D47A1;
+        --md-surface: #2D2D2D;
+        --md-background: #1E1E1E;
+        --md-on-surface: #FFFFFF;
+        --md-on-surface-medium: #BDBDBD;
+        --md-on-surface-disabled: #757575;
+        --md-divider: #404040;
+        --md-success: #81C784;
+        --md-success-light: #1B5E20;
+        --md-error: #EF5350;
+        --md-error-light: #B71C1C;
+        --md-warning: #FFB74D;
+        --md-warning-light: #E65100;
+      }
+      body { background: var(--md-background); color: var(--md-on-surface); }
+      .card { background: var(--md-surface); }
+      .card h2 { border-color: var(--md-divider); }
+      .form-group label { color: var(--md-on-surface); }
+      input, select, textarea { background: var(--md-background); border-color: var(--md-divider); color: var(--md-on-surface); }
+      .toggle-group { background: var(--md-background); }
+      .toggle-info .label { color: var(--md-on-surface); }
+      .shortcut-list { background: var(--md-background); }
+      .shortcut-item { border-color: var(--md-divider); }
+      .shortcut-item kbd { background: var(--md-surface); border-color: var(--md-divider); color: var(--md-on-surface); }
+      .test-section { background: var(--md-background); }
+      .test-result { background: var(--md-surface); border-color: var(--md-divider); color: var(--md-on-surface); }
+      .btn-secondary { background: var(--md-surface); color: var(--md-on-surface); border-color: var(--md-divider); }
+      .actions { border-color: var(--md-divider); }
+      .api-type-btn { background: var(--md-surface); border-color: var(--md-divider); color: var(--md-on-surface-medium); }
+      .api-type-btn:hover { background: var(--md-divider); border-color: var(--md-primary); color: var(--md-primary); }
+      .api-type-btn.active { background: var(--md-primary-light); border-color: var(--md-primary); color: var(--md-primary); }
+      .api-settings { border-color: var(--md-divider); }
+      .btn-small { background: var(--md-surface); border-color: var(--md-divider); }
+      .btn-small:hover { background: var(--md-divider); }
+      .slider-value { background: var(--md-surface); color: var(--md-primary); }
+      .info-box { background: var(--md-warning-light); border-color: var(--md-warning); color: var(--md-warning); }
+      .advanced-options { background: var(--md-background); border-color: var(--md-divider); }
+      .advanced-options summary { color: var(--md-primary); }
+      .domain-list { background: var(--md-background); }
+      .domain-item { background: var(--md-surface); border-color: var(--md-divider); }
+    }
+
+    /* Domain List Styles */
+    .domain-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 40px;
+      padding: 12px;
+      background: var(--md-surface);
+      border-radius: 8px;
+      border: 1px solid var(--md-divider);
+    }
+
+    .domain-list:empty::before {
+      content: 'Keine Domains konfiguriert';
+      color: var(--md-on-surface-disabled);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .domain-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: white;
+      border: 1px solid var(--md-divider);
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .domain-item span {
+      color: var(--md-on-surface);
+      font-family: monospace;
+    }
+
+    .domain-item button {
+      background: none;
+      border: none;
+      color: var(--md-on-surface-disabled);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .domain-item button:hover {
+      color: var(--md-error);
+      background: var(--md-error-light);
+    }
+
+    .domain-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .domain-input-row input {
+      flex: 1;
+    }
+
+    /* Advanced Options Accordion */
+    .advanced-options {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--md-surface);
+      border: 1px solid var(--md-divider);
+      border-radius: 8px;
+    }
+
+    .advanced-options summary {
+      cursor: pointer;
+      font-weight: 500;
+      color: var(--md-primary);
+      user-select: none;
+      padding: 4px 0;
+    }
+
+    .advanced-options summary:hover {
+      color: var(--md-primary-dark);
+    }
+
+    .advanced-options[open] summary {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--md-divider);
+    }
+
+    .advanced-options .toggle-group {
+      margin-top: 12px;
+    }
+
+    .advanced-options .toggle-group:first-of-type {
+      margin-top: 0;
     }
 
     @media (max-width: 600px) {
@@ -609,6 +747,44 @@
           </div>
         </div>
 
+        <!-- Erweiterte LLM Optionen -->
+        <details class="advanced-options">
+          <summary>Erweiterte Optionen</summary>
+          
+          <div class="toggle-group">
+            <div class="toggle-info">
+              <div class="label">Embedding-Modelle ausblenden</div>
+              <div class="desc">Zeigt nur Chat-/Instruct-Modelle in der Modellauswahl</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="filterEmbeddingModels">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-group">
+            <div class="toggle-info">
+              <div class="label">Übersetzung abbrechbar</div>
+              <div class="desc">Ermöglicht das Abbrechen laufender LLM-Anfragen</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="enableAbortTranslation">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-group">
+            <div class="toggle-info">
+              <div class="label">Fallback auf LibreTranslate</div>
+              <div class="desc">Nutzt LibreTranslate automatisch wenn LM Studio nicht erreichbar ist</div>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="enableLLMFallback">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </details>
+
         <div class="info-box">
           <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
           <span>LM Studio muss gestartet sein und der Server unter "Developer" aktiviert.</span>
@@ -695,17 +871,6 @@
         </label>
       </div>
 
-      <div class="toggle-group">
-        <div class="toggle-info">
-          <div class="label">Doppelklick übersetzen</div>
-          <div class="desc">Übersetzt ein Wort bei Doppelklick</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="enableDoubleClick">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-
       <div class="form-group" style="margin-top: 16px;">
         <label for="selectionIconDelay">Icon-Verzögerung (ms)</label>
         <div class="description">Zeit bis das Auswahl-Icon erscheint</div>
@@ -742,29 +907,12 @@
         </label>
       </div>
 
-      <div class="toggle-group">
-        <div class="toggle-info">
-          <div class="label">Auto-Ausblenden</div>
-          <div class="desc">Tooltip automatisch nach einiger Zeit schließen</div>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="tooltipAutoHide">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-
-      <div class="row" style="margin-top: 16px;">
-        <div class="form-group">
-          <label for="tooltipPosition">Tooltip-Position</label>
-          <select id="tooltipPosition">
-            <option value="below">Unterhalb</option>
-            <option value="above">Oberhalb</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="tooltipAutoHideDelay">Auto-Ausblenden (ms)</label>
-          <input type="number" id="tooltipAutoHideDelay" min="1000" max="30000" step="500">
-        </div>
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="tooltipPosition">Tooltip-Position</label>
+        <select id="tooltipPosition">
+          <option value="below">Unterhalb</option>
+          <option value="above">Oberhalb</option>
+        </select>
       </div>
     </div>
 
@@ -774,6 +922,17 @@
         <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
         Seitenübersetzung
       </h2>
+
+      <div class="toggle-group">
+        <div class="toggle-info">
+          <div class="label">Cache automatisch laden</div>
+          <div class="desc">Lädt gecachte Übersetzungen automatisch beim Seitenaufruf</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="autoLoadCache">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
 
       <div class="toggle-group">
         <div class="toggle-info">
@@ -793,6 +952,24 @@
           <option value="below">Unterhalb des Originals</option>
           <option value="above">Oberhalb des Originals</option>
         </select>
+      </div>
+    </div>
+
+    <!-- Auto-Translate Domains -->
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        Automatische Übersetzung
+      </h2>
+
+      <div class="form-group">
+        <label>Domains automatisch übersetzen</label>
+        <div class="description">Seiten dieser Domains werden automatisch beim Laden übersetzt</div>
+        <div id="autoTranslateDomains" class="domain-list"></div>
+        <div class="domain-input-row" style="margin-top: 12px;">
+          <input type="text" id="newAutoTranslateDomain" placeholder="z.B. docs.example.com">
+          <button type="button" id="addAutoTranslateDomain" class="btn-secondary">Hinzufügen</button>
+        </div>
       </div>
     </div>
 
@@ -875,6 +1052,47 @@
       </div>
     </div>
 
+    <!-- Token-Kosten (Experimentell) -->
+    <div class="card">
+      <h2>
+        <svg viewBox="0 0 24 24"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+        Token-Kosten <span style="font-size: 11px; color: var(--md-warning); font-weight: normal;">(Experimentell)</span>
+      </h2>
+
+      <div class="toggle-group">
+        <div class="toggle-info">
+          <div class="label">Kostenberechnung aktivieren</div>
+          <div class="desc">Berechnet geschätzte Kosten basierend auf Token-Verbrauch</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="enableTokenCost">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="tokenCostPer">Kosten pro Token-Einheit</label>
+        <div class="row" style="gap: 12px; align-items: center;">
+          <input type="number" id="tokenCostAmount" min="0.001" max="100" step="0.001" value="1" style="width: 100px;">
+          <span style="color: var(--md-on-surface-medium);">Cent pro</span>
+          <input type="number" id="tokenCostPer" min="100" max="1000000" step="100" value="10000" style="width: 120px;">
+          <span style="color: var(--md-on-surface-medium);">Tokens</span>
+        </div>
+        <div class="desc" style="margin-top: 8px; font-size: 12px; color: var(--md-on-surface-medium);">
+          Beispiel: 1 Cent pro 10.000 Tokens = 0,01€ pro 10K Tokens
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="tokenCostCurrency">Währung</label>
+        <select id="tokenCostCurrency" style="width: 120px;">
+          <option value="EUR">€ Euro</option>
+          <option value="USD">$ Dollar</option>
+          <option value="CHF">CHF Franken</option>
+        </select>
+      </div>
+    </div>
+
     <!-- Text-to-Speech -->
     <div class="card">
       <h2>
@@ -928,7 +1146,7 @@
         </div>
       </div>
 
-      <p style="margin-top: 12px; font-size: 13px; color: #6B7280;">
+      <p style="margin-top: 12px; font-size: 13px; color: var(--md-on-surface-medium);">
         Tastenkürzel können in Chrome unter <strong>chrome://extensions/shortcuts</strong> angepasst werden.
       </p>
     </div>

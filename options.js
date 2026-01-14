@@ -54,15 +54,20 @@ Antworte NUR mit JSON: {"translation": "...", "alternatives": ["..."], "context_
 async function loadSettings() {
   const settings = await chrome.storage.sync.get([
     'serviceUrl', 'apiKey', 'sourceLang', 'targetLang',
-    'showSelectionIcon', 'selectionIconDelay', 'enableDoubleClick',
-    'showOriginalInTooltip', 'showAlternatives', 'tooltipAutoHide',
-    'tooltipPosition', 'tooltipAutoHideDelay', 'highlightTranslated',
+    'showSelectionIcon', 'selectionIconDelay',
+    'showOriginalInTooltip', 'showAlternatives',
+    'tooltipPosition', 'highlightTranslated',
     'bilingualPosition', 'enableTTS', 'ttsLanguage', 'excludedDomains',
     'skipCodeBlocks', 'skipBlockquotes', 'useTabsForAlternatives',
     'simplifyPdfExport', 'fixInlineSpacing', 'tabWordThreshold',
-    // Neue LM Studio Einstellungen
+    // LM Studio Einstellungen
     'apiType', 'lmStudioUrl', 'lmStudioModel', 'lmStudioTemperature',
-    'lmStudioMaxTokens', 'lmStudioContext', 'lmStudioCustomPrompt'
+    'lmStudioMaxTokens', 'lmStudioContext', 'lmStudioCustomPrompt',
+    // Neue v3.1 Einstellungen
+    'autoLoadCache', 'autoTranslateDomains',
+    'filterEmbeddingModels', 'enableAbortTranslation', 'enableLLMFallback',
+    // Token-Kosten (Experimentell)
+    'enableTokenCost', 'tokenCostAmount', 'tokenCostPer', 'tokenCostCurrency'
   ]);
 
   // LibreTranslate Werte
@@ -76,6 +81,11 @@ async function loadSettings() {
   document.getElementById('lmStudioMaxTokens').value = settings.lmStudioMaxTokens || 2000;
   document.getElementById('lmStudioContext').value = settings.lmStudioContext || 'general';
   document.getElementById('lmStudioCustomPrompt').value = settings.lmStudioCustomPrompt || '';
+  
+  // Erweiterte LLM Optionen (default: aus)
+  document.getElementById('filterEmbeddingModels').checked = settings.filterEmbeddingModels || false;
+  document.getElementById('enableAbortTranslation').checked = settings.enableAbortTranslation || false;
+  document.getElementById('enableLLMFallback').checked = settings.enableLLMFallback || false;
   
   // API-Typ setzen und UI aktualisieren
   const apiType = settings.apiType || 'libretranslate';
@@ -102,16 +112,19 @@ async function loadSettings() {
   // Auslöser
   document.getElementById('showSelectionIcon').checked = settings.showSelectionIcon !== false;
   document.getElementById('selectionIconDelay').value = settings.selectionIconDelay || 200;
-  document.getElementById('enableDoubleClick').checked = settings.enableDoubleClick || false;
   
   // Anzeige
   document.getElementById('showOriginalInTooltip').checked = settings.showOriginalInTooltip !== false;
   document.getElementById('showAlternatives').checked = settings.showAlternatives !== false;
-  document.getElementById('tooltipAutoHide').checked = settings.tooltipAutoHide !== false;
   document.getElementById('tooltipPosition').value = settings.tooltipPosition || 'below';
-  document.getElementById('tooltipAutoHideDelay').value = settings.tooltipAutoHideDelay || 5000;
   document.getElementById('highlightTranslated').checked = settings.highlightTranslated !== false;
   document.getElementById('bilingualPosition').value = settings.bilingualPosition || 'below';
+  
+  // Seitenübersetzung
+  document.getElementById('autoLoadCache').checked = settings.autoLoadCache || false;
+  
+  // Auto-Translate Domains laden
+  renderAutoTranslateDomains(settings.autoTranslateDomains || []);
   
   // Inhaltsfilter
   document.getElementById('skipCodeBlocks').checked = settings.skipCodeBlocks !== false;
@@ -129,6 +142,76 @@ async function loadSettings() {
   
   // Ausgeschlossene Domains
   document.getElementById('excludedDomains').value = settings.excludedDomains || '';
+  
+  // Token-Kosten (Experimentell)
+  document.getElementById('enableTokenCost').checked = settings.enableTokenCost || false;
+  document.getElementById('tokenCostAmount').value = settings.tokenCostAmount ?? 1;
+  document.getElementById('tokenCostPer').value = settings.tokenCostPer || 10000;
+  document.getElementById('tokenCostCurrency').value = settings.tokenCostCurrency || 'EUR';
+}
+
+// Auto-Translate Domains rendern
+function renderAutoTranslateDomains(domains) {
+  const container = document.getElementById('autoTranslateDomains');
+  container.innerHTML = '';
+  
+  domains.forEach((domain, index) => {
+    const item = document.createElement('div');
+    item.className = 'domain-item';
+    item.innerHTML = `
+      <span>${domain}</span>
+      <button type="button" data-index="${index}" title="Entfernen">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+      </button>
+    `;
+    container.appendChild(item);
+  });
+  
+  // Event-Listener für Löschen
+  container.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => removeAutoTranslateDomain(parseInt(btn.dataset.index)));
+  });
+}
+
+// Domain hinzufügen
+async function addAutoTranslateDomain() {
+  const input = document.getElementById('newAutoTranslateDomain');
+  const domain = input.value.trim().toLowerCase();
+  
+  if (!domain) return;
+  
+  // Domain validieren
+  if (!/^[a-z0-9]+([\-\.][a-z0-9]+)*\.[a-z]{2,}$/i.test(domain)) {
+    showStatus('Ungültige Domain: ' + domain, 'error');
+    return;
+  }
+  
+  const settings = await chrome.storage.sync.get(['autoTranslateDomains']);
+  const domains = settings.autoTranslateDomains || [];
+  
+  if (domains.includes(domain)) {
+    showStatus('Domain bereits vorhanden', 'error');
+    return;
+  }
+  
+  domains.push(domain);
+  await chrome.storage.sync.set({ autoTranslateDomains: domains });
+  
+  input.value = '';
+  renderAutoTranslateDomains(domains);
+  showStatus('Domain hinzugefügt: ' + domain, 'success');
+}
+
+// Domain entfernen
+async function removeAutoTranslateDomain(index) {
+  const settings = await chrome.storage.sync.get(['autoTranslateDomains']);
+  const domains = settings.autoTranslateDomains || [];
+  
+  const removed = domains.splice(index, 1);
+  await chrome.storage.sync.set({ autoTranslateDomains: domains });
+  
+  renderAutoTranslateDomains(domains);
+  showStatus('Domain entfernt: ' + removed[0], 'success');
 }
 
 function setupEventListeners() {
@@ -161,6 +244,15 @@ function setupEventListeners() {
   document.getElementById('lmStudioContext').addEventListener('change', (e) => {
     toggleCustomPrompt(e.target.value);
   });
+  
+  // Auto-Translate Domain hinzufügen
+  document.getElementById('addAutoTranslateDomain').addEventListener('click', addAutoTranslateDomain);
+  document.getElementById('newAutoTranslateDomain').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addAutoTranslateDomain();
+    }
+  });
 }
 
 function setApiType(type) {
@@ -190,6 +282,7 @@ async function loadLMStudioModels() {
   const url = document.getElementById('lmStudioUrl').value.trim();
   const modelSelect = document.getElementById('lmStudioModel');
   const refreshBtn = document.getElementById('refreshModelsBtn');
+  const filterEmbedding = document.getElementById('filterEmbeddingModels').checked;
   
   if (!url) {
     showStatus('Bitte LM Studio URL eingeben', 'error');
@@ -209,16 +302,36 @@ async function loadLMStudioModels() {
     modelSelect.innerHTML = '';
     
     if (data.data && data.data.length > 0) {
-      data.data.forEach(model => {
-        const option = document.createElement('option');
-        option.value = model.id;
-        // Kurzen Namen extrahieren
-        const shortName = model.id.split('/').pop();
-        option.textContent = shortName;
-        option.title = model.id; // Vollständiger Name als Tooltip
-        modelSelect.appendChild(option);
-      });
-      showStatus(`${data.data.length} Modell(e) geladen`, 'success');
+      let models = data.data;
+      
+      // Embedding-Modelle filtern wenn Option aktiviert
+      if (filterEmbedding) {
+        models = models.filter(model => {
+          const id = model.id.toLowerCase();
+          return !id.includes('embed') && !id.includes('embedding');
+        });
+      }
+      
+      if (models.length > 0) {
+        models.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.id;
+          // Kurzen Namen extrahieren
+          const shortName = model.id.split('/').pop();
+          option.textContent = shortName;
+          option.title = model.id; // Vollständiger Name als Tooltip
+          modelSelect.appendChild(option);
+        });
+        
+        const filtered = data.data.length - models.length;
+        const msg = filtered > 0 
+          ? `${models.length} Chat-Modell(e) geladen (${filtered} Embedding-Modelle ausgeblendet)`
+          : `${models.length} Modell(e) geladen`;
+        showStatus(msg, 'success');
+      } else {
+        modelSelect.innerHTML = '<option value="">Keine Chat-Modelle gefunden</option>';
+        showStatus('Keine Chat-Modelle gefunden (nur Embedding-Modelle vorhanden)', 'error');
+      }
     } else {
       modelSelect.innerHTML = '<option value="">Keine Modelle gefunden</option>';
       showStatus('Keine Modelle in LM Studio geladen', 'error');
@@ -254,6 +367,11 @@ async function saveSettings() {
     lmStudioContext: document.getElementById('lmStudioContext').value,
     lmStudioCustomPrompt: document.getElementById('lmStudioCustomPrompt').value.trim(),
     
+    // Erweiterte LLM Optionen
+    filterEmbeddingModels: document.getElementById('filterEmbeddingModels').checked,
+    enableAbortTranslation: document.getElementById('enableAbortTranslation').checked,
+    enableLLMFallback: document.getElementById('enableLLMFallback').checked,
+    
     // Sprachen
     sourceLang: document.getElementById('sourceLang').value,
     targetLang: document.getElementById('targetLang').value,
@@ -261,16 +379,16 @@ async function saveSettings() {
     // Auslöser
     showSelectionIcon: document.getElementById('showSelectionIcon').checked,
     selectionIconDelay: parseInt(document.getElementById('selectionIconDelay').value) || 200,
-    enableDoubleClick: document.getElementById('enableDoubleClick').checked,
     
     // Anzeige
     showOriginalInTooltip: document.getElementById('showOriginalInTooltip').checked,
     showAlternatives: document.getElementById('showAlternatives').checked,
-    tooltipAutoHide: document.getElementById('tooltipAutoHide').checked,
     tooltipPosition: document.getElementById('tooltipPosition').value,
-    tooltipAutoHideDelay: parseInt(document.getElementById('tooltipAutoHideDelay').value) || 5000,
     highlightTranslated: document.getElementById('highlightTranslated').checked,
     bilingualPosition: document.getElementById('bilingualPosition').value,
+    
+    // Seitenübersetzung
+    autoLoadCache: document.getElementById('autoLoadCache').checked,
     
     // Inhaltsfilter
     skipCodeBlocks: document.getElementById('skipCodeBlocks').checked,
@@ -287,7 +405,13 @@ async function saveSettings() {
     ttsLanguage: document.getElementById('ttsLanguage').value,
     
     // Ausgeschlossene Domains
-    excludedDomains: document.getElementById('excludedDomains').value.trim()
+    excludedDomains: document.getElementById('excludedDomains').value.trim(),
+    
+    // Token-Kosten (Experimentell)
+    enableTokenCost: document.getElementById('enableTokenCost').checked,
+    tokenCostAmount: parseFloat(document.getElementById('tokenCostAmount').value) || 1,
+    tokenCostPer: parseInt(document.getElementById('tokenCostPer').value) || 10000,
+    tokenCostCurrency: document.getElementById('tokenCostCurrency').value
   };
 
   try {

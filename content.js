@@ -1,6 +1,7 @@
-// Content Script - Smart Web Translator v3.0
+// Content Script - Smart Web Translator v3.3
 // Mit LocalStorage Cache, Pin-Funktion, Hover-Original, Toggle
-// NEU: Plain-Text Support (RFC, .txt, Pre-Only Seiten)
+// NEU: Progress-Ring, Token-Zähler, Auto-Load Cache, Domain Auto-Translate
+// v3.3: Toast Notifications Stack, Cache-Validierung, Dark Mode Fixes
 
 class SmartTranslator {
   constructor() {
@@ -46,12 +47,13 @@ class SmartTranslator {
     this.settings = await chrome.storage.sync.get([
       'serviceUrl', 'apiKey', 'sourceLang', 'targetLang',
       'showSelectionIcon', 'selectionIconDelay', 'tooltipPosition',
-      'tooltipAutoHide', 'tooltipAutoHideDelay', 'enableDoubleClick',
       'showOriginalInTooltip', 'showAlternatives', 'enableTTS',
       'skipCodeBlocks', 'skipBlockquotes', 'useTabsForAlternatives',
       'simplifyPdfExport', 'fixInlineSpacing', 'tabWordThreshold',
       // LM Studio Settings
-      'apiType', 'lmStudioUrl', 'lmStudioModel', 'lmStudioContext'
+      'apiType', 'lmStudioUrl', 'lmStudioModel', 'lmStudioContext',
+      // Neue v3.1 Settings
+      'autoLoadCache', 'autoTranslateDomains', 'enableAbortTranslation'
     ]);
 
     this.settings.serviceUrl = this.settings.serviceUrl || 'http://localhost:5000/translate';
@@ -59,7 +61,6 @@ class SmartTranslator {
     this.settings.sourceLang = this.settings.sourceLang || 'auto';
     this.settings.showSelectionIcon = this.settings.showSelectionIcon !== false;
     this.settings.selectionIconDelay = this.settings.selectionIconDelay || 200;
-    this.settings.tooltipAutoHideDelay = this.settings.tooltipAutoHideDelay || 5000;
     this.settings.skipCodeBlocks = this.settings.skipCodeBlocks !== false;
     this.settings.skipBlockquotes = this.settings.skipBlockquotes !== false;
     this.settings.useTabsForAlternatives = this.settings.useTabsForAlternatives !== false;
@@ -67,6 +68,8 @@ class SmartTranslator {
     this.settings.fixInlineSpacing = this.settings.fixInlineSpacing !== false;
     this.settings.tabWordThreshold = this.settings.tabWordThreshold || 20;
     this.settings.apiType = this.settings.apiType || 'libretranslate';
+    this.settings.autoLoadCache = this.settings.autoLoadCache || false;
+    this.settings.autoTranslateDomains = this.settings.autoTranslateDomains || [];
   }
 
   // === Cache Management ===
@@ -76,11 +79,38 @@ class SmartTranslator {
       if (cached) {
         const data = JSON.parse(cached);
         if (data && data.translations && Object.keys(data.translations).length > 0) {
-          this.showCacheIndicator();
+          // Auto-Load wenn aktiviert
+          if (this.settings.autoLoadCache) {
+            this.loadCachedTranslation();
+            this.showNotification('Übersetzung aus Cache geladen', 'success');
+          } else {
+            this.showCacheIndicator();
+          }
         }
       }
     } catch (e) {
       console.warn('Cache check error:', e);
+    }
+    
+    // Auto-Translate Domain prüfen
+    this.checkAutoTranslateDomain();
+  }
+  
+  // Prüfe ob aktuelle Domain automatisch übersetzt werden soll
+  async checkAutoTranslateDomain() {
+    const hostname = window.location.hostname.toLowerCase();
+    const domains = this.settings.autoTranslateDomains || [];
+    
+    if (domains.some(d => hostname === d || hostname.endsWith('.' + d))) {
+      // Nur wenn noch nicht übersetzt und kein Cache geladen
+      if (!this.isTranslated) {
+        // Kurz warten bis Seite fertig geladen
+        setTimeout(() => {
+          if (!this.isTranslated) {
+            this.translatePage('replace');
+          }
+        }, 1000);
+      }
     }
   }
 
@@ -209,17 +239,35 @@ class SmartTranslator {
       if (key && key.startsWith('smt_cache_')) {
         try {
           const data = JSON.parse(localStorage.getItem(key));
-          entries.push({
-            key,
-            url: data.url,
-            timestamp: data.timestamp,
-            size: (key.length + JSON.stringify(data).length) * 2,
-            count: Object.keys(data.translations || {}).length
-          });
+          // Nur Einträge mit tatsächlichen Übersetzungen anzeigen
+          const translationCount = Object.keys(data.translations || {}).length;
+          if (translationCount > 0) {
+            entries.push({
+              key,
+              url: data.url,
+              timestamp: data.timestamp,
+              size: (key.length + JSON.stringify(data).length) * 2,
+              count: translationCount
+            });
+          }
         } catch (e) {}
       }
     }
     return entries.sort((a, b) => b.timestamp - a.timestamp);
+  }
+
+  // Prüft ob die aktuelle Seite einen gültigen Cache mit Übersetzungen hat
+  hasValidCache() {
+    try {
+      const cached = localStorage.getItem(this.cacheKey);
+      if (!cached) return false;
+      
+      const data = JSON.parse(cached);
+      // Cache ist nur gültig wenn er tatsächlich Übersetzungen enthält
+      return data && data.translations && Object.keys(data.translations).length > 0;
+    } catch (e) {
+      return false;
+    }
   }
 
   clearCache(key = null) {
@@ -241,7 +289,6 @@ class SmartTranslator {
   setupEventListeners() {
     document.addEventListener('mouseup', (e) => this.handleMouseUp(e));
     document.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-    document.addEventListener('dblclick', (e) => this.handleDoubleClick(e));
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -278,18 +325,6 @@ class SmartTranslator {
         this.hideSelectionIcon();
       }
     }, this.settings.selectionIconDelay);
-  }
-
-  handleDoubleClick(e) {
-    if (!this.settings.enableDoubleClick) return;
-    if (e.target.closest('.smt-ui')) return;
-
-    const selection = window.getSelection();
-    const text = selection.toString().trim();
-
-    if (text.length > 0) {
-      this.translateSelection(text);
-    }
   }
 
   // === Selection Icon ===
@@ -485,10 +520,29 @@ class SmartTranslator {
       this.showNotification('Kopiert!', 'success');
     });
 
-    tooltip.querySelector('.smt-speak')?.addEventListener('click', () => {
+    tooltip.querySelector('.smt-speak')?.addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      
+      // Wenn gerade spricht → stoppen
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+        btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+        btn.title = 'Vorlesen';
+        return;
+      }
+      
       const activePanel = tooltip.querySelector('.smt-tab-panel.active');
       const textToSpeak = activePanel ? activePanel.textContent : translated;
-      this.speak(textToSpeak);
+      
+      // Button auf Stop ändern
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>';
+      btn.title = 'Stoppen';
+      
+      this.speak(textToSpeak, () => {
+        // Zurück auf Play wenn fertig
+        btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+        btn.title = 'Vorlesen';
+      });
     });
 
     tooltip.querySelector('.smt-close').addEventListener('click', () => {
@@ -506,16 +560,6 @@ class SmartTranslator {
 
     requestAnimationFrame(() => tooltip.classList.add('smt-visible'));
     this.adjustTooltipPosition(tooltip);
-
-    // Auto-Hide nur wenn nicht gepinnt
-    if (!isPinned && this.settings.tooltipAutoHide) {
-      setTimeout(() => {
-        if (tooltip && !tooltip.classList.contains('smt-pinned')) {
-          tooltip.classList.remove('smt-visible');
-          setTimeout(() => tooltip.remove(), 200);
-        }
-      }, this.settings.tooltipAutoHideDelay);
-    }
   }
 
   makeDraggable(element) {
@@ -713,12 +757,15 @@ class SmartTranslator {
                 this.wrapWithHoverOriginal(node, originalText, result.translatedText);
               }
             }
+            
+            // Token-Info für Progress
+            translated++;
+            this.updateProgress(translated, total, { tokens: result.tokens || 0 });
           } catch (e) {
             console.warn('Übersetzungsfehler:', e);
+            translated++;
+            this.updateProgress(translated, total);
           }
-
-          translated++;
-          this.updateProgress(translated, total);
         }));
 
         await new Promise(r => setTimeout(r, 50));
@@ -729,7 +776,15 @@ class SmartTranslator {
 
       this.isTranslated = true;
       this.showProgress(false);
-      this.showNotification(`${translated} Textblöcke übersetzt`, 'success');
+      
+      // Notification mit Token-Info
+      const tokenInfo = this.totalTokens > 0 
+        ? ` (${this.formatTokens(this.totalTokens)} Tokens)` 
+        : '';
+      this.showNotification(`${translated} Textblöcke übersetzt${tokenInfo}`, 'success');
+      
+      // Seiten-Token-Stats für späteren Abruf speichern
+      this.pageTokens = this.totalTokens;
 
     } catch (error) {
       this.showProgress(false);
@@ -824,9 +879,14 @@ class SmartTranslator {
     const parent = node.parentElement;
     if (!parent) return;
 
+    // WICHTIG: Führende/nachfolgende Leerzeichen vom Original-Node beibehalten
+    const fullText = node.textContent;
+    const leadingSpaces = fullText.match(/^\s*/)[0];
+    const trailingSpaces = fullText.match(/\s*$/)[0];
+
     const wrapper = document.createElement('span');
     wrapper.className = 'smt-translated-text';
-    wrapper.textContent = translated;
+    wrapper.textContent = leadingSpaces + translated + trailingSpaces;
     wrapper.dataset.original = original;
     wrapper.dataset.translated = translated;
     wrapper.title = original; // Native Tooltip als Fallback
@@ -1419,15 +1479,62 @@ class SmartTranslator {
   showProgress(show) {
     if (show) {
       if (!this.progressOverlay) {
+        this.abortController = new AbortController();
+        this.totalTokens = 0;
+        this.currentTokens = 0;
+        
         this.progressOverlay = document.createElement('div');
         this.progressOverlay.className = 'smt-ui smt-progress';
         this.progressOverlay.innerHTML = `
           <div class="smt-progress-content">
-            <div class="smt-progress-bar"><div class="smt-progress-fill"></div></div>
-            <div class="smt-progress-text">Übersetze... 0%</div>
+            <div class="smt-progress-header">
+              <span class="smt-progress-title">Übersetze...</span>
+              <div class="smt-progress-actions">
+                <button class="smt-progress-minimize" title="Minimieren">−</button>
+                ${this.settings.enableAbortTranslation ? '<button class="smt-progress-cancel" title="Abbrechen">✕</button>' : ''}
+              </div>
+            </div>
+            <div class="smt-progress-body">
+              <div class="smt-progress-bar"><div class="smt-progress-fill"></div></div>
+              <div class="smt-progress-info">
+                <span class="smt-progress-text">0%</span>
+                <span class="smt-progress-stats">0 / 0</span>
+              </div>
+              <div class="smt-progress-tokens">
+                <span class="smt-token-current" title="Tokens letzte Anfrage">0</span>
+                <span class="smt-token-divider">•</span>
+                <span class="smt-token-total" title="Tokens gesamt">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="smt-progress-ring">
+            <svg viewBox="0 0 36 36">
+              <path class="smt-ring-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+              <path class="smt-ring-fill" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke-dasharray="0, 100"/>
+            </svg>
+            <span class="smt-ring-percent">0%</span>
           </div>
         `;
         document.body.appendChild(this.progressOverlay);
+        
+        // Event-Listener
+        this.progressOverlay.querySelector('.smt-progress-minimize').addEventListener('click', () => {
+          this.progressOverlay.classList.toggle('smt-minimized');
+        });
+        
+        const cancelBtn = this.progressOverlay.querySelector('.smt-progress-cancel');
+        if (cancelBtn) {
+          cancelBtn.addEventListener('click', () => {
+            this.abortController?.abort();
+            this.showProgress(false);
+            this.showNotification('Übersetzung abgebrochen', 'error');
+          });
+        }
+        
+        // Minimierter Ring klickbar machen
+        this.progressOverlay.querySelector('.smt-progress-ring').addEventListener('click', () => {
+          this.progressOverlay.classList.remove('smt-minimized');
+        });
       }
       requestAnimationFrame(() => this.progressOverlay?.classList.add('smt-visible'));
     } else {
@@ -1436,37 +1543,106 @@ class SmartTranslator {
         setTimeout(() => {
           this.progressOverlay?.remove();
           this.progressOverlay = null;
+          this.abortController = null;
         }, 300);
       }
     }
   }
 
-  updateProgress(current, total) {
+  updateProgress(current, total, tokenInfo = null) {
     if (!this.progressOverlay) return;
+    
     const percent = Math.round((current / total) * 100);
+    
+    // Balken
     const fill = this.progressOverlay.querySelector('.smt-progress-fill');
-    const text = this.progressOverlay.querySelector('.smt-progress-text');
     if (fill) fill.style.width = `${percent}%`;
-    if (text) text.textContent = `Übersetze... ${percent}% (${current}/${total})`;
+    
+    // Text
+    const text = this.progressOverlay.querySelector('.smt-progress-text');
+    if (text) text.textContent = `${percent}%`;
+    
+    // Stats
+    const stats = this.progressOverlay.querySelector('.smt-progress-stats');
+    if (stats) stats.textContent = `${current} / ${total}`;
+    
+    // Ring (für minimierte Ansicht)
+    const ringFill = this.progressOverlay.querySelector('.smt-ring-fill');
+    if (ringFill) ringFill.setAttribute('stroke-dasharray', `${percent}, 100`);
+    
+    const ringPercent = this.progressOverlay.querySelector('.smt-ring-percent');
+    if (ringPercent) ringPercent.textContent = `${percent}%`;
+    
+    // Token-Info
+    if (tokenInfo) {
+      this.currentTokens = tokenInfo.tokens || 0;
+      this.totalTokens += this.currentTokens;
+      
+      const currentEl = this.progressOverlay.querySelector('.smt-token-current');
+      const totalEl = this.progressOverlay.querySelector('.smt-token-total');
+      
+      // Volle Zahlen mit Tausendertrenner im Progress-Overlay
+      if (currentEl) currentEl.textContent = this.formatTokens(this.currentTokens, false);
+      if (totalEl) totalEl.textContent = this.formatTokens(this.totalTokens, false);
+    }
+  }
+  
+  // Token-Formatierung mit Tausendertrenner
+  // useShort=true für kompakte Darstellung (K/M), false für volle Zahl
+  formatTokens(num, useShort = false) {
+    if (useShort && num >= 1000000000) {
+      return (num / 1000000000).toFixed(1) + 'G';
+    } else if (useShort && num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (useShort && num >= 10000) {
+      return (num / 1000).toFixed(1) + 'K';
+    } else {
+      return num.toLocaleString('de-DE');
+    }
   }
 
   showNotification(message, type = 'info') {
+    // Container erstellen/finden für Toast-Stack
+    let container = document.querySelector('.smt-notification-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.className = 'smt-ui smt-notification-container';
+      document.body.appendChild(container);
+    }
+
     const notification = document.createElement('div');
     notification.className = `smt-ui smt-notification smt-notification-${type}`;
     notification.textContent = message;
-    document.body.appendChild(notification);
+    container.appendChild(notification);
 
+    // Animation starten
     requestAnimationFrame(() => notification.classList.add('smt-visible'));
 
+    // Nach 3 Sekunden ausblenden
     setTimeout(() => {
       notification.classList.remove('smt-visible');
-      setTimeout(() => notification.remove(), 300);
+      setTimeout(() => {
+        notification.remove();
+        // Container entfernen wenn leer
+        if (container.children.length === 0) {
+          container.remove();
+        }
+      }, 300);
     }, 3000);
   }
 
-  speak(text) {
+  speak(text, onEnd = null) {
+    // Laufende Sprache abbrechen
+    speechSynthesis.cancel();
+    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = this.settings.ttsLanguage || 'de-DE';
+    
+    if (onEnd) {
+      utterance.onend = onEnd;
+      utterance.onerror = onEnd;
+    }
+    
     speechSynthesis.speak(utterance);
   }
 
@@ -1537,7 +1713,7 @@ class SmartTranslator {
         sendResponse({
           size: this.getCacheSize(),
           entries: this.getCacheInfo(),
-          currentPageHasCache: !!localStorage.getItem(this.cacheKey)
+          currentPageHasCache: this.hasValidCache()
         });
         break;
 
@@ -1551,7 +1727,7 @@ class SmartTranslator {
           isTranslated: this.isTranslated,
           mode: this.translationMode,
           count: this.originalTexts.size,
-          hasCache: !!localStorage.getItem(this.cacheKey)
+          hasCache: this.hasValidCache()
         });
         break;
 

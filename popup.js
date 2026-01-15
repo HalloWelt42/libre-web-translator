@@ -1,4 +1,4 @@
-// Popup JavaScript - Smart Web Translator v2.1
+// Popup JavaScript - Smart Web Translator v3.0
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadSettings();
@@ -7,9 +7,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadSettings() {
-  const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+  const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang', 'apiType']);
   document.getElementById('sourceLang').value = settings.sourceLang || 'auto';
   document.getElementById('targetLang').value = settings.targetLang || 'de';
+  
+  // API-Badge aktualisieren
+  updateApiBadge(settings.apiType || 'libretranslate');
+}
+
+function updateApiBadge(apiType) {
+  const badge = document.getElementById('apiBadge');
+  const badgeText = document.getElementById('apiBadgeText');
+  
+  if (apiType === 'lmstudio') {
+    badge.classList.add('lmstudio');
+    badgeText.textContent = 'LLM';
+    badge.title = 'LM Studio (Lokales LLM)';
+  } else {
+    badge.classList.remove('lmstudio');
+    badgeText.textContent = 'Libre';
+    badge.title = 'LibreTranslate';
+  }
 }
 
 async function checkPageCache() {
@@ -128,6 +146,17 @@ function setupEventListeners() {
     showToast('Kopiert!');
   });
 
+  // Click-to-Copy auf resultBox
+  resultBox.addEventListener('click', () => {
+    const text = resultBox.textContent.trim();
+    if (text && !resultBox.classList.contains('error')) {
+      navigator.clipboard.writeText(text);
+      resultBox.classList.add('copied');
+      showToast('Übersetzung kopiert!');
+      setTimeout(() => resultBox.classList.remove('copied'), 1500);
+    }
+  });
+
   // Vorlesen
   document.getElementById('speakResult').addEventListener('click', () => {
     const targetLang = document.getElementById('targetLang').value;
@@ -216,11 +245,29 @@ function getLangCode(lang) {
 function showToast(message) {
   const toast = document.createElement('div');
   toast.style.cssText = `
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: #323232; color: white; padding: 12px 24px; border-radius: 4px;
-    font-size: 14px; z-index: 1000;
+    position: fixed; bottom: 20px; right: 16px;
+    background: #1B5E20; color: white; padding: 12px 20px; border-radius: 8px;
+    font-size: 14px; font-weight: 500; z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: toastSlide 2s ease forwards;
   `;
+  
+  // Animation hinzufügen
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes toastSlide {
+      0% { opacity: 0; transform: translateX(100%); }
+      15% { opacity: 1; transform: translateX(0); }
+      85% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(100%); }
+    }
+  `;
+  document.head.appendChild(style);
+  
   toast.textContent = message;
   document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2000);
+  setTimeout(() => {
+    toast.remove();
+    style.remove();
+  }, 2000);
 }

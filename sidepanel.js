@@ -1,4 +1,4 @@
-// Side Panel JavaScript - Smart Web Translator v2.1
+// Side Panel JavaScript - Smart Web Translator v3.0
 
 class SidePanelController {
   constructor() {
@@ -17,9 +17,29 @@ class SidePanelController {
   }
 
   async loadSettings() {
-    const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang']);
+    const settings = await chrome.storage.sync.get(['sourceLang', 'targetLang', 'apiType']);
     document.getElementById('sourceLang').value = settings.sourceLang || 'auto';
     document.getElementById('targetLang').value = settings.targetLang || 'de';
+    
+    // API-Badge aktualisieren
+    this.updateApiBadge(settings.apiType || 'libretranslate');
+  }
+
+  updateApiBadge(apiType) {
+    const badge = document.getElementById('apiBadge');
+    const badgeText = document.getElementById('apiBadgeText');
+    
+    if (badge && badgeText) {
+      if (apiType === 'lmstudio') {
+        badge.classList.add('lmstudio');
+        badgeText.textContent = 'LLM';
+        badge.title = 'LM Studio (Lokales LLM)';
+      } else {
+        badge.classList.remove('lmstudio');
+        badgeText.textContent = 'Libre';
+        badge.title = 'LibreTranslate';
+      }
+    }
   }
 
   setupTabs() {
@@ -57,6 +77,25 @@ class SidePanelController {
       }
     });
 
+    // Click-to-Copy für sourceText
+    sourceText.addEventListener('click', (e) => {
+      const text = sourceText.value.trim();
+      if (text && e.detail === 2) { // Doppelklick
+        navigator.clipboard.writeText(text);
+        this.showToast('Quelltext kopiert!');
+      }
+    });
+
+    // Click-to-Copy für resultBox
+    resultBox.addEventListener('click', () => {
+      if (this.currentTranslation) {
+        navigator.clipboard.writeText(this.currentTranslation);
+        resultBox.classList.add('copied');
+        this.showToast('Übersetzung kopiert!');
+        setTimeout(() => resultBox.classList.remove('copied'), 1500);
+      }
+    });
+
     document.getElementById('swapLangs').addEventListener('click', () => {
       const source = document.getElementById('sourceLang');
       const target = document.getElementById('targetLang');
@@ -91,12 +130,17 @@ class SidePanelController {
     const translateBtn = document.getElementById('translateBtn');
     const resultBox = document.getElementById('resultBox');
     const resultActions = document.getElementById('resultActions');
+    const contextNotes = document.getElementById('contextNotes');
+    const contextNotesText = document.getElementById('contextNotesText');
 
     const sourceLang = document.getElementById('sourceLang').value;
     const targetLang = document.getElementById('targetLang').value;
 
     translateBtn.disabled = true;
     translateBtn.innerHTML = '<div class="spinner"></div> Übersetze...';
+    
+    // Context Notes ausblenden während der Übersetzung
+    if (contextNotes) contextNotes.classList.remove('show');
 
     try {
       const result = await chrome.runtime.sendMessage({
@@ -113,6 +157,12 @@ class SidePanelController {
         this.currentTranslation = result.translatedText;
         resultActions.style.display = 'flex';
 
+        // Kontext-Notizen anzeigen (nur bei LM Studio)
+        if (result.contextNotes && contextNotes && contextNotesText) {
+          contextNotesText.textContent = result.contextNotes;
+          contextNotes.classList.add('show');
+        }
+
         await chrome.runtime.sendMessage({
           action: 'addToHistory',
           entry: {
@@ -120,7 +170,8 @@ class SidePanelController {
             translated: result.translatedText,
             source: sourceLang,
             target: targetLang,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            apiType: result.apiType
           }
         });
       } else {
@@ -229,9 +280,122 @@ class SidePanelController {
         this.showToast('Cache gelöscht');
       }
     });
+    
+    // Token Reset Button (nur Tokens)
+    const resetTokensBtn = document.getElementById('resetTokens');
+    if (resetTokensBtn) {
+      resetTokensBtn.addEventListener('click', async () => {
+        await chrome.runtime.sendMessage({ action: 'resetTokenStats' });
+        this.loadTokenStats();
+        this.showToast('Token-Zähler zurückgesetzt');
+      });
+    }
+    
+    // Kosten Reset Button
+    const resetCostBtn = document.getElementById('resetCost');
+    if (resetCostBtn) {
+      resetCostBtn.addEventListener('click', async () => {
+        await chrome.storage.local.set({ totalCost: 0 });
+        this.loadTokenStats();
+        this.showToast('Kosten zurückgesetzt');
+      });
+    }
+    
+    // Alles Reset Button
+    const resetAllBtn = document.getElementById('resetAll');
+    if (resetAllBtn) {
+      resetAllBtn.addEventListener('click', async () => {
+        if (confirm('Alle Statistiken (Tokens + Kosten) zurücksetzen?')) {
+          await chrome.runtime.sendMessage({ action: 'resetTokenStats' });
+          await chrome.storage.local.set({ totalCost: 0 });
+          this.loadTokenStats();
+          this.showToast('Alle Statistiken zurückgesetzt');
+        }
+      });
+    }
+  }
+
+  async loadTokenStats() {
+    try {
+      // Token-Stats laden
+      const response = await chrome.runtime.sendMessage({ action: 'getTokenStats' });
+      
+      // Kosten-Einstellungen laden
+      const settings = await chrome.storage.sync.get([
+        'enableTokenCost', 'tokenCostAmount', 'tokenCostPer', 'tokenCostCurrency'
+      ]);
+      
+      // Gespeicherte Kosten laden
+      const costData = await chrome.storage.local.get(['totalCost']);
+      
+      if (response.success && response.stats) {
+        const stats = response.stats;
+        
+        const totalEl = document.getElementById('totalTokens');
+        const promptEl = document.getElementById('promptTokens');
+        const completionEl = document.getElementById('completionTokens');
+        const requestEl = document.getElementById('requestCount');
+        
+        if (totalEl) totalEl.textContent = this.formatNumber(stats.totalTokens);
+        if (promptEl) promptEl.textContent = this.formatNumber(stats.promptTokens);
+        if (completionEl) completionEl.textContent = this.formatNumber(stats.completionTokens);
+        if (requestEl) requestEl.textContent = this.formatNumber(stats.requestCount);
+        
+        // Kosten-Anzeige
+        const costDisplay = document.getElementById('costDisplay');
+        const totalCostEl = document.getElementById('totalCost');
+        const costCurrencyEl = document.getElementById('costCurrency');
+        
+        if (settings.enableTokenCost && costDisplay) {
+          costDisplay.style.display = 'block';
+          
+          // Kosten berechnen
+          const costAmount = settings.tokenCostAmount || 1;
+          const costPer = settings.tokenCostPer || 10000;
+          const currency = settings.tokenCostCurrency || 'EUR';
+          
+          // Cent pro X Tokens -> Euro/Dollar
+          const costPerToken = (costAmount / 100) / costPer;
+          const totalCost = costData.totalCost || (stats.totalTokens * costPerToken);
+          
+          // Falls noch keine gespeicherten Kosten, basierend auf Tokens berechnen
+          if (!costData.totalCost && stats.totalTokens > 0) {
+            await chrome.storage.local.set({ totalCost: totalCost });
+          }
+          
+          if (totalCostEl) {
+            totalCostEl.textContent = totalCost.toLocaleString('de-DE', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 4
+            });
+          }
+          
+          if (costCurrencyEl) {
+            const symbols = { 'EUR': '€', 'USD': '$', 'CHF': 'CHF' };
+            costCurrencyEl.textContent = symbols[currency] || '€';
+          }
+        } else if (costDisplay) {
+          costDisplay.style.display = 'none';
+        }
+      }
+    } catch (e) {
+      console.error('Token stats error:', e);
+    }
+  }
+
+  formatNumber(num) {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 10000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toLocaleString('de-DE');
   }
 
   async loadCache() {
+    // Token-Stats laden
+    await this.loadTokenStats();
+    
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab) return;
@@ -256,7 +420,7 @@ class SidePanelController {
       cacheList.innerHTML = response.entries.map(entry => `
         <div class="cache-item" data-key="${entry.key}">
           <div class="cache-item-info">
-            <div class="cache-item-url">${this.escapeHtml(entry.url)}</div>
+            <a href="${this.escapeAttr(entry.url)}" class="cache-item-url" target="_blank" title="In neuem Tab öffnen">${this.escapeHtml(entry.url)}</a>
             <div class="cache-item-meta">${entry.count} Übersetzungen · ${this.formatBytes(entry.size)} · ${this.formatDate(entry.timestamp)}</div>
           </div>
           <div class="cache-item-actions">

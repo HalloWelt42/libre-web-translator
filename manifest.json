@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Smart Web Translator",
-  "version": "2.1",
-  "description": "Intelligenter Übersetzer mit Caching, PDF-Export und bilingualer Anzeige",
+  "version": "3.3",
+  "description": "Intelligenter Übersetzer mit LibreTranslate & LM Studio (lokale LLMs), Fachkontext-Übersetzungen, Caching, PDF-Export und bilingualer Anzeige",
 
   "permissions": [
     "activeTab",
